@@ -17,6 +17,7 @@
     </properties>
     
     <modules>
+        <module>common-lib</module>
         <module>user-service</module>
         <module>product-service</module>
         <module>cart-service</module>
