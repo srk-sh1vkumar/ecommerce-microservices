@@ -1,0 +1,53 @@
+# Prometheus Configuration
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'docker-compose'
+    replica: 'prometheus-1'
+
+# Remote write receiver enabled via command line flag
+
+# Scrape configurations
+scrape_configs:
+  # OpenTelemetry Collector metrics
+  - job_name: 'otel-collector'
+    static_configs:
+      - targets: ['otel-collector:8889']
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Spring Boot Actuator endpoints (if available)
+  - job_name: 'spring-boot-services'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+    static_configs:
+      - targets: 
+          - 'user-service:8081'
+          - 'product-service:8082'
+          - 'cart-service:8083'
+          - 'order-service:8084'
+          - 'api-gateway:8080'
+          - 'eureka-server:8761'
+
+  # Apache HTTP Server metrics (if mod_status is enabled)
+  - job_name: 'apache-frontend'
+    metrics_path: '/server-status'
+    params:
+      auto: ['']
+    static_configs:
+      - targets: ['frontend:80']
+    scrape_interval: 30s
+
+# Recording rules for common queries
+rule_files:
+  - "recording_rules.yml"
+
+# Remote write configuration for long-term storage (optional)
+# remote_write:
+#   - url: http://mimir:9009/api/v1/push

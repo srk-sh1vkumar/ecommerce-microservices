@@ -1,0 +1,303 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: ecommerce-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: YOUR_SECURE_PASSWORD
+      MONGO_INITDB_DATABASE: ecommerce
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - ecommerce-network
+
+  # Eureka Service Discovery
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # User Service
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "8082:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=user-service
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=user-service,service.version=1.0.0
+    depends_on:
+      - mongodb
+      - eureka-server
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # Product Service
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    ports:
+      - "8083:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=product-service
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=product-service,service.version=1.0.0
+    depends_on:
+      - mongodb
+      - eureka-server
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # Cart Service
+  cart-service:
+    build: ./cart-service
+    container_name: cart-service
+    ports:
+      - "8084:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=cart-service
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=cart-service,service.version=1.0.0
+    depends_on:
+      - mongodb
+      - eureka-server
+      - product-service
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # Order Service
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8085:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=order-service
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=order-service,service.version=1.0.0
+    depends_on:
+      - mongodb
+      - eureka-server
+      - product-service
+      - cart-service
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=api-gateway
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=api-gateway,service.version=1.0.0
+    depends_on:
+      - eureka-server
+      - user-service
+      - product-service
+      - cart-service
+      - order-service
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # Intelligent Monitoring Service
+  intelligent-monitoring-service:
+    build: ./intelligent-monitoring-service
+    container_name: intelligent-monitoring-service
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+      - MONITORING_GIT_REPOSITORY_URL=${MONITORING_GIT_REPOSITORY_URL:-}
+      - MONITORING_GIT_USERNAME=${MONITORING_GIT_USERNAME:-}
+      - MONITORING_GIT_TOKEN=${MONITORING_GIT_TOKEN:-}
+    depends_on:
+      - mongodb
+      - eureka-server
+      - api-gateway
+      - otel-collector
+    networks:
+      - ecommerce-network
+    restart: on-failure
+    volumes:
+      - monitoring_workspace:/app/monitoring-workspace
+
+  # Frontend (Angular + Apache)
+  frontend:
+    build: ./frontend
+    container_name: ecommerce-frontend
+    ports:
+      - "80:80"
+    environment:
+      - OTEL_SERVICE_NAME=apache-frontend
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    depends_on:
+      - api-gateway
+      - otel-collector
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.89.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/otel-collector.yml"]
+    volumes:
+      - ./monitoring/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8889:8889"   # Prometheus metrics
+      - "13133:13133" # Health check
+    depends_on:
+      - tempo
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Grafana Tempo for trace storage
+  tempo:
+    image: grafana/tempo:2.3.1
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - ./monitoring/tempo.yml:/etc/tempo.yml
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP
+      - "4317"        # OTLP gRPC (internal)
+      - "4318"        # OTLP HTTP (internal)
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Prometheus for metrics (optional)
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-remote-write-receiver'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=YOUR_ADMIN_PASSWORD
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - tempo
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Load Generator for realistic traffic
+  load-generator:
+    build: ./load-generator
+    container_name: load-generator
+    environment:
+      - TARGET_BASE_URL=http://frontend
+      - CONCURRENT_USERS=5
+      - TEST_DURATION=3600  # 1 hour
+      - SPAWN_RATE=0.5
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=load-generator
+    depends_on:
+      - frontend
+      - otel-collector
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    profiles:
+      - load-testing
+
+volumes:
+  mongodb_data:
+  tempo_data:
+  monitoring_workspace:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  ecommerce-network:
+    driver: bridge

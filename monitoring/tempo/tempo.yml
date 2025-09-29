@@ -1,0 +1,63 @@
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+
+query_frontend:
+  search:
+    duration_slo: 5s
+    throughput_bytes_slo: 1.073741824e+09
+  trace_by_id:
+    duration_slo: 5s
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+        thrift_compact:
+          endpoint: 0.0.0.0:6831
+        thrift_binary:
+          endpoint: 0.0.0.0:6832
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 1h
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/blocks
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+
+overrides:
+  defaults:
+    # Global limits
+    ingestion_rate_strategy: global
+    ingestion_rate_limit_bytes: 20000
+    ingestion_burst_size_bytes: 30000
+    
+    # Per-tenant limits
+    max_traces_per_user: 10000
+    max_bytes_per_trace: 50000000 # 50MB
+    
+    # Search limits
+    max_search_duration: 168h # 7 days

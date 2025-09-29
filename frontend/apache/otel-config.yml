@@ -1,0 +1,46 @@
+# OpenTelemetry configuration for Apache mod_otel
+service:
+  name: apache-frontend
+  version: "1.0.0"
+
+resource:
+  attributes:
+    service.name: apache-frontend
+    service.version: "1.0.0"
+    service.instance.id: apache-frontend-1
+    deployment.environment: docker
+    container.name: ecommerce-frontend
+
+exporters:
+  otlp:
+    endpoint: http://otel-collector:4318
+    headers:
+      api-key: "your-api-key-here"
+    timeout: 30s
+    retry_config:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 120s
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  resource:
+    attributes:
+      - key: service.name
+        value: apache-frontend
+        action: upsert
+      - key: service.version  
+        value: "1.0.0"
+        action: upsert
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [otlp]

@@ -1,0 +1,7 @@
+Application Name,Calls/Min,Avg Response Time (ms),Errors/Min,Error Rate (%),Health Status,Timestamp
+User-Service,45.3,120.5,0.8,1.77,Healthy,2025-09-13 01:36:12
+Product-Service,78.9,95.2,2.1,2.66,Warning,2025-09-13 01:36:12
+Cart-Service,34.6,85.3,0.3,0.87,Healthy,2025-09-13 01:36:12
+Order-Service,23.7,180.4,0.5,2.11,Healthy,2025-09-13 01:36:12
+API-Gateway,156.8,45.7,8.2,5.23,Critical,2025-09-13 01:36:12
+Frontend-Service,89.2,67.8,1.4,1.57,Healthy,2025-09-13 01:36:12

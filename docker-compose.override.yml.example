@@ -1,0 +1,41 @@
+# AppDynamics Controller Configuration
+# Copy this file to docker-compose.override.yml and update with your credentials
+# docker-compose.override.yml is automatically loaded and git-ignored
+
+version: '3.8'
+services:
+  order-service:
+    environment:
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=<your-controller>.saas.appdynamics.com
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=<your-account-name>
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=<your-access-key>
+
+  cart-service:
+    environment:
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=<your-controller>.saas.appdynamics.com
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=<your-account-name>
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=<your-access-key>
+
+  product-service:
+    environment:
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=<your-controller>.saas.appdynamics.com
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=<your-account-name>
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=<your-access-key>
+
+  user-service:
+    environment:
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=<your-controller>.saas.appdynamics.com
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=<your-account-name>
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=<your-access-key>
+
+  api-gateway:
+    environment:
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=<your-controller>.saas.appdynamics.com
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=<your-account-name>
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=<your-access-key>
+
+  eureka-server:
+    environment:
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=<your-controller>.saas.appdynamics.com
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=<your-account-name>
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=<your-access-key>

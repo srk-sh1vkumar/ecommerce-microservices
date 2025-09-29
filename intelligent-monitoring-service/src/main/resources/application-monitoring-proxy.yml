@@ -1,0 +1,316 @@
+# Monitoring Proxy Configuration
+monitoring:
+  proxy:
+    enabled: true
+    
+    # Authentication settings
+    authentication:
+      enabled: false  # Set to true in production with proper credentials
+      grafana:
+        token: ${GRAFANA_API_TOKEN:}
+        username: ${GRAFANA_USERNAME:admin}
+        password: ${GRAFANA_PASSWORD:admin}
+      elasticsearch:
+        username: ${ELASTICSEARCH_USERNAME:elastic}
+        password: ${ELASTICSEARCH_PASSWORD:changeme}
+    
+    # CORS settings
+    cors:
+      allowed-origins:
+        - "https://admin.ecommerce.com"
+        - "http://localhost:4200"
+        - "http://localhost:3000"
+      allowed-methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowed-headers:
+        - "Content-Type"
+        - "Authorization"
+        - "X-Requested-With"
+        - "X-Trace-Id"
+        - "X-Span-Id"
+    
+    # Service connection settings
+    connection:
+      timeout: 30000  # 30 seconds
+      retry-attempts: 3
+      circuit-breaker:
+        enabled: true
+        failure-threshold: 5
+        recovery-timeout: 60000  # 1 minute
+    
+    # Request/Response transformation
+    transformation:
+      request:
+        add-trace-headers: true
+        add-correlation-id: true
+        sanitize-sensitive-data: true
+      response:
+        cache-duration: 300  # 5 minutes for static content
+        compress: true
+        add-proxy-headers: true
+
+  # Individual service configurations
+  services:
+    grafana:
+      url: ${GRAFANA_URL:http://localhost:3000}
+      health-endpoint: "/api/health"
+      category: "visualization"
+      timeout: 30000
+      authentication-required: false
+      features:
+        - dashboards
+        - alerts
+        - datasources
+      
+    prometheus:
+      url: ${PROMETHEUS_URL:http://localhost:9090}
+      health-endpoint: "/-/healthy"
+      category: "metrics"
+      timeout: 15000
+      authentication-required: false
+      features:
+        - metrics-query
+        - alerts
+        - targets
+        - rules
+      
+    alertmanager:
+      url: ${ALERTMANAGER_URL:http://localhost:9093}
+      health-endpoint: "/-/healthy"
+      category: "alerting"
+      timeout: 15000
+      authentication-required: false
+      features:
+        - alerts
+        - silences
+        - receivers
+      
+    tempo:
+      url: ${TEMPO_URL:http://localhost:3200}
+      health-endpoint: "/ready"
+      category: "tracing"
+      timeout: 30000
+      authentication-required: false
+      features:
+        - trace-search
+        - trace-query
+        - metrics
+      
+    elasticsearch:
+      url: ${ELASTICSEARCH_URL:http://localhost:5601}
+      health-endpoint: "/api/status"
+      category: "logging"
+      timeout: 30000
+      authentication-required: false
+      features:
+        - log-search
+        - visualizations
+        - dashboards
+        - index-management
+
+# Context-aware routing configuration
+context:
+  routing:
+    enabled: true
+    
+    # Service scope routing
+    service-scope:
+      api-gateway:
+        grafana-dashboard: "api-gateway-dashboard"
+        prometheus-queries:
+          - "http_requests_total{job='api-gateway'}"
+          - "http_request_duration_seconds{job='api-gateway'}"
+        log-filters:
+          - "service.name:api-gateway"
+      
+      user-service:
+        grafana-dashboard: "user-service-dashboard"
+        prometheus-queries:
+          - "http_requests_total{job='user-service'}"
+          - "jvm_memory_used_bytes{job='user-service'}"
+        log-filters:
+          - "service.name:user-service"
+      
+      product-service:
+        grafana-dashboard: "product-service-dashboard"
+        prometheus-queries:
+          - "http_requests_total{job='product-service'}"
+          - "database_connections_active{service='product-service'}"
+        log-filters:
+          - "service.name:product-service"
+      
+      cart-service:
+        grafana-dashboard: "cart-service-dashboard"
+        prometheus-queries:
+          - "http_requests_total{job='cart-service'}"
+          - "redis_connected_clients{service='cart-service'}"
+        log-filters:
+          - "service.name:cart-service"
+      
+      order-service:
+        grafana-dashboard: "order-service-dashboard"
+        prometheus-queries:
+          - "http_requests_total{job='order-service'}"
+          - "order_processing_duration_seconds"
+        log-filters:
+          - "service.name:order-service"
+    
+    # Transaction scope routing
+    transaction-scope:
+      checkout:
+        grafana-dashboard: "checkout-flow-dashboard"
+        tempo-queries:
+          - "span.name:checkout-process"
+        log-filters:
+          - "transaction.type:checkout"
+      
+      product-browse:
+        grafana-dashboard: "product-browsing-dashboard"
+        tempo-queries:
+          - "span.name:product-search"
+          - "span.name:product-details"
+        log-filters:
+          - "transaction.type:product-browse"
+      
+      user-registration:
+        grafana-dashboard: "user-onboarding-dashboard"
+        tempo-queries:
+          - "span.name:user-registration"
+        log-filters:
+          - "transaction.type:user-registration"
+    
+    # Environment-based routing
+    environment-scope:
+      production:
+        prometheus-queries:
+          - "{env='production'}"
+        alertmanager-filters:
+          - "env=production"
+        log-filters:
+          - "environment:production"
+      
+      staging:
+        prometheus-queries:
+          - "{env='staging'}"
+        alertmanager-filters:
+          - "env=staging"
+        log-filters:
+          - "environment:staging"
+      
+      development:
+        prometheus-queries:
+          - "{env='development'}"
+        alertmanager-filters:
+          - "env=development"
+        log-filters:
+          - "environment:development"
+
+# Security configuration
+security:
+  proxy:
+    enabled: true
+    
+    # Rate limiting
+    rate-limiting:
+      enabled: true
+      requests-per-minute: 100
+      burst-capacity: 20
+      
+    # Request filtering
+    request-filtering:
+      enabled: true
+      blocked-patterns:
+        - ".*\\.\\./.*"  # Path traversal
+        - ".*<script.*"  # XSS
+      allowed-content-types:
+        - "application/json"
+        - "application/x-www-form-urlencoded"
+        - "text/plain"
+      
+    # Response sanitization
+    response-sanitization:
+      enabled: true
+      remove-server-headers: true
+      add-security-headers: true
+      
+  # Authentication and authorization
+  auth:
+    required: false  # Set to true in production
+    jwt:
+      enabled: false
+      secret: ${JWT_SECRET:monitoring-proxy-secret}
+      expiration: 3600  # 1 hour
+    
+    # API key authentication
+    api-key:
+      enabled: false
+      header-name: "X-API-Key"
+      valid-keys:
+        - ${MONITORING_API_KEY:development-key}
+
+# Health check configuration
+health:
+  services:
+    check-interval: 30000  # 30 seconds
+    failure-threshold: 3
+    recovery-threshold: 2
+    
+  endpoints:
+    exposure:
+      include:
+        - health
+        - info
+        - metrics
+        - prometheus
+        - env
+    
+# Logging configuration for proxy
+logging:
+  level:
+    com.ecommerce.monitoring.controller.MonitoringProxyController: DEBUG
+    org.springframework.web.client.RestTemplate: INFO
+    
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [Monitoring-Proxy] %logger{36} - %msg%n"
+    
+  # Proxy-specific logging
+  proxy:
+    access-log:
+      enabled: true
+      format: "%h %l %u %t \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\" %D"
+    
+    error-log:
+      enabled: true
+      include-stack-trace: false  # Set to true for debugging
+      
+# Performance monitoring
+performance:
+  metrics:
+    enabled: true
+    
+  # Proxy performance
+  proxy:
+    request-timeout: 30000
+    connection-pool:
+      max-total: 100
+      max-per-route: 20
+      connection-timeout: 5000
+      socket-timeout: 30000
+    
+  # Caching
+  cache:
+    enabled: true
+    ttl: 300  # 5 minutes
+    max-entries: 1000
+    
+# Development and debugging
+debug:
+  proxy:
+    enabled: false  # Set to true for debugging
+    log-requests: false
+    log-responses: false
+    log-headers: false

@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "name": "MacBook Pro 16-inch",
+    "category": "electronics",
+    "price": 2499.99,
+    "keywords": ["laptop", "apple", "macbook", "computer"]
+  },
+  {
+    "id": 2,
+    "name": "iPhone 15 Pro",
+    "category": "electronics", 
+    "price": 999.99,
+    "keywords": ["phone", "smartphone", "apple", "iphone"]
+  },
+  {
+    "id": 3,
+    "name": "Sony WH-1000XM5 Headphones",
+    "category": "electronics",
+    "price": 399.99,
+    "keywords": ["headphones", "sony", "wireless", "noise-canceling"]
+  },
+  {
+    "id": 4,
+    "name": "Running Shoes - Nike Air Zoom",
+    "category": "sports",
+    "price": 129.99,
+    "keywords": ["shoes", "running", "nike", "athletic"]
+  },
+  {
+    "id": 5,
+    "name": "Wireless Gaming Mouse",
+    "category": "electronics",
+    "price": 79.99,
+    "keywords": ["mouse", "gaming", "wireless", "computer"]
+  },
+  {
+    "id": 6,
+    "name": "Coffee Maker - Breville",
+    "category": "home",
+    "price": 299.99,
+    "keywords": ["coffee", "maker", "breville", "kitchen"]
+  },
+  {
+    "id": 7,
+    "name": "Yoga Mat Premium",
+    "category": "sports",
+    "price": 49.99,
+    "keywords": ["yoga", "mat", "exercise", "fitness"]
+  },
+  {
+    "id": 8,
+    "name": "Backpack Travel 40L",
+    "category": "travel",
+    "price": 89.99,
+    "keywords": ["backpack", "travel", "hiking", "outdoor"]
+  },
+  {
+    "id": 9,
+    "name": "Wireless Charger Stand",
+    "category": "electronics",
+    "price": 39.99,
+    "keywords": ["charger", "wireless", "phone", "stand"]
+  },
+  {
+    "id": 10,
+    "name": "Smart Watch Series 9",
+    "category": "electronics",
+    "price": 399.99,
+    "keywords": ["watch", "smart", "apple", "fitness"]
+  }
+]

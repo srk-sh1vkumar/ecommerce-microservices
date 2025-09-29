@@ -1,0 +1,110 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "E-Commerce OpenTelemetry Tracing Dashboard",
+    "tags": ["tracing", "opentelemetry", "ecommerce"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Trace Search",
+        "type": "table",
+        "targets": [
+          {
+            "datasource": {
+              "type": "tempo",
+              "uid": "tempo"
+            },
+            "queryType": "search",
+            "serviceName": "",
+            "spanName": "",
+            "tags": "",
+            "minDuration": "",
+            "maxDuration": "",
+            "limit": 20
+          }
+        ],
+        "gridPos": {
+          "h": 10,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "displayMode": "table"
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Service Map",
+        "type": "nodeGraph",
+        "targets": [
+          {
+            "datasource": {
+              "type": "tempo",
+              "uid": "tempo"
+            },
+            "queryType": "serviceMap"
+          }
+        ],
+        "gridPos": {
+          "h": 15,
+          "w": 24,
+          "x": 0,
+          "y": 10
+        }
+      },
+      {
+        "id": 3,
+        "title": "Request Rate by Service",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "aevbm96pgvo5ce"
+            },
+            "expr": "sum(rate(traces_total[5m])) by (service_name)",
+            "legendFormat": "{{service_name}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 25
+        }
+      },
+      {
+        "id": 4,
+        "title": "Average Response Time",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus", 
+              "uid": "aevbm96pgvo5ce"
+            },
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))",
+            "legendFormat": "95th percentile"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 25
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}

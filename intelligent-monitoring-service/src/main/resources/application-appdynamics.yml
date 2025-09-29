@@ -1,0 +1,111 @@
+# AppDynamics Integration Configuration for Intelligent Monitoring Service
+
+appdynamics:
+  controller:
+    # Your AppDynamics Controller Details
+    host: ${APPDYNAMICS_CONTROLLER_HOST_NAME}  # e.g., mycompany.saas.appdynamics.com
+    port: 443
+    ssl: true
+    
+  # OAuth2 Configuration (Preferred Method)
+  oauth2:
+    client-id: ${APPDYNAMICS_OAUTH2_CLIENT_ID}      # OAuth2 Client ID
+    client-secret: ${APPDYNAMICS_OAUTH2_CLIENT_SECRET}  # OAuth2 Client Secret
+    scope: "read"                                    # API scope (read, write, or both)
+    token-buffer-minutes: 5                         # Refresh token 5 minutes before expiry
+    token-check-interval: 300000                    # Check token every 5 minutes (ms)
+    
+  # Legacy Authentication (Fallback - Deprecated)
+  account:
+    name: ${APPDYNAMICS_AGENT_ACCOUNT_NAME:-}       # Your account name (optional)
+    access-key: ${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY:-}  # API access key (optional)
+    
+  application:
+    name: "ecommerce-microservices"  # Application name in AppD
+    
+  api:
+    # API Configuration
+    timeout: 30000  # 30 seconds
+    retry-attempts: 3
+    rate-limit: 100  # requests per minute
+    
+    # Data Fetching Intervals
+    business-transactions-interval: 60000    # 1 minute
+    error-snapshots-interval: 30000         # 30 seconds  
+    performance-metrics-interval: 60000     # 1 minute
+    health-violations-interval: 30000       # 30 seconds
+    
+  # Data Collection Configuration
+  data-collection:
+    enabled: true                            # Enable/disable AppD data collection
+    parallel-execution: true                 # Execute API calls in parallel
+    max-threads: 5                          # Maximum threads for parallel execution
+    comprehensive-interval: 300000          # Comprehensive collection every 5 minutes
+    
+  data-processing:
+    # Snapshot Processing
+    max-snapshots-per-request: 50
+    snapshot-severity-filter: "ERROR,CRITICAL"
+    stack-trace-depth-limit: 50
+    
+    # Error Pattern Detection
+    enable-error-correlation: true
+    error-signature-algorithm: "hash-based"
+    duplicate-threshold-minutes: 5
+    
+    # Performance Thresholds
+    response-time-threshold: 2000     # ms
+    error-rate-threshold: 5.0         # percentage
+    throughput-threshold: 100         # requests/min
+    
+  correlation:
+    # Cross-platform correlation
+    enable-otel-correlation: true
+    trace-id-header: "x-trace-id"
+    span-id-header: "x-span-id"
+    
+    # Business transaction mapping
+    business-transaction-patterns:
+      - pattern: "/api/products*"
+        name: "Product_Browse"
+        tier: "api-gateway"
+      - pattern: "/api/cart*"
+        name: "Cart_Operations" 
+        tier: "cart-service"
+      - pattern: "/api/orders*"
+        name: "Order_Processing"
+        tier: "order-service"
+      - pattern: "/api/users*"
+        name: "User_Management"
+        tier: "user-service"
+
+# Integration with Monitoring Service
+monitoring:
+  appdynamics:
+    enabled: true
+    auto-fix:
+      enabled: true
+      confidence-threshold: 0.8
+      rollback-on-failure: true
+    
+    alerts:
+      # Alert thresholds for AppD data
+      critical-error-rate: 10.0
+      warning-response-time: 5000
+      memory-usage-threshold: 85.0
+      cpu-usage-threshold: 80.0
+      
+    enrichment:
+      # Enrich AppD data with additional context
+      add-git-context: true
+      add-deployment-context: true
+      add-business-context: true
+
+# Logging Configuration  
+logging:
+  level:
+    com.ecommerce.monitoring.service.AppDynamicsIntegrationService: DEBUG
+    org.springframework.web.client.RestTemplate: DEBUG
+    
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [AppD-Integration] %logger{36} - %msg%n"

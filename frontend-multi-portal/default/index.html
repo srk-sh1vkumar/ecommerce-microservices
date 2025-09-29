@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecommerce Platform - Portal Selection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 800px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+        
+        .portals {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .portal-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .portal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .portal-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .portal-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .portal-description {
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+        
+        .portal-link {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: background 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .portal-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .footer {
+            margin-top: 3rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛍️ Ecommerce Platform</h1>
+        <p class="subtitle">Choose your portal to access the platform</p>
+        
+        <div class="portals">
+            <div class="portal-card">
+                <div class="portal-icon">🛒</div>
+                <div class="portal-title">Customer Portal</div>
+                <div class="portal-description">Shop products, manage cart, and place orders</div>
+                <a href="https://shop.ecommerce.local" class="portal-link">Shop Now</a>
+            </div>
+            
+            <div class="portal-card">
+                <div class="portal-icon">⚙️</div>
+                <div class="portal-title">Admin Dashboard</div>
+                <div class="portal-description">Business administration and monitoring</div>
+                <a href="https://admin.ecommerce.local" class="portal-link">Admin Panel</a>
+            </div>
+            
+            <div class="portal-card">
+                <div class="portal-icon">🏪</div>
+                <div class="portal-title">Vendor Portal</div>
+                <div class="portal-description">Manage products and track sales</div>
+                <a href="https://vendor.ecommerce.local" class="portal-link">Vendor Area</a>
+            </div>
+            
+            <div class="portal-card">
+                <div class="portal-icon">📱</div>
+                <div class="portal-title">Mobile App</div>
+                <div class="portal-description">Mobile-optimized shopping experience</div>
+                <a href="https://m.ecommerce.local" class="portal-link">Mobile Site</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Enterprise Multi-Portal E-commerce Platform with Intelligent Monitoring</p>
+            <p>Powered by Apache HTTP Server with Advanced Security</p>
+        </div>
+    </div>
+</body>
+</html>

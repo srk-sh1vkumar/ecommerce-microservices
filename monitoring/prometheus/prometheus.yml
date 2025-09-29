@@ -1,0 +1,68 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    cluster: 'ecommerce-local'
+    environment: 'development'
+
+rule_files:
+  - "alerts/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Self monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # cAdvisor
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Application services (when running)
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+
+  - job_name: 'product-service'
+    static_configs:
+      - targets: ['host.docker.internal:8082']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+
+  - job_name: 'cart-service'
+    static_configs:
+      - targets: ['host.docker.internal:8083']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+
+  - job_name: 'order-service'
+    static_configs:
+      - targets: ['host.docker.internal:8084']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+
+  - job_name: 'eureka-server'
+    static_configs:
+      - targets: ['host.docker.internal:8761']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s

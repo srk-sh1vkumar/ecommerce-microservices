@@ -1,0 +1,203 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: intelligent-monitoring-service
+  
+  data:
+    mongodb:
+      uri: mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      database: ecommerce
+  
+  profiles:
+    active: docker,monitoring-proxy
+
+# Eureka Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+# Management and Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# AppDynamics Integration
+appdynamics:
+  controller:
+    host: ${APPDYNAMICS_CONTROLLER_HOST_NAME:}
+    port: ${APPDYNAMICS_CONTROLLER_PORT:443}
+  account:
+    name: ${APPDYNAMICS_AGENT_ACCOUNT_NAME:}
+    access-key: ${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY:}
+  application:
+    name: ${APPDYNAMICS_AGENT_APPLICATION_NAME:ecommerce-microservices}
+
+# Git Integration for Automated Fixes
+monitoring:
+  git:
+    repository-url: ${MONITORING_GIT_REPOSITORY_URL:}
+    workspace: ${MONITORING_GIT_WORKSPACE:/tmp/monitoring-workspace}
+    username: ${MONITORING_GIT_USERNAME:}
+    token: ${MONITORING_GIT_TOKEN:}
+  
+  # Automated Fixing Configuration
+  automated-fixing:
+    enabled: true
+    max-concurrent-fixes: 3
+    test-timeout-minutes: 10
+    confidence-threshold: 0.8
+    occurrence-threshold: 3
+  
+  # Pattern Analysis Configuration
+  pattern-analysis:
+    enabled: true
+    confidence-update-interval: 60 # minutes
+    pattern-cleanup-days: 90
+  
+  # Data Collection Configuration
+  data-collection:
+    appdynamics:
+      enabled: true
+      fetch-interval-minutes: 5
+      business-transactions: true
+      errors: true
+      performance-metrics: true
+      snapshots: true
+    
+    opentelemetry:
+      enabled: true
+      collector-endpoint: http://otel-collector:4317
+      trace-correlation: true
+    
+    prometheus:
+      enabled: true
+      endpoint: http://prometheus:9090
+      query-interval-minutes: 5
+
+# Circuit Breaker and Retry Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      appdynamics-api:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 30s
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+  retry:
+    instances:
+      appdynamics-api:
+        max-attempts: 3
+        wait-duration: 1s
+        exponential-backoff-multiplier: 2
+
+# Logging Configuration
+logging:
+  level:
+    com.ecommerce.monitoring: DEBUG
+    org.springframework.data.mongodb: INFO
+    io.github.resilience4j: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+
+# Cross-Platform Correlation Configuration
+cross-platform:
+  correlation:
+    enabled: true
+    trace-correlation-window-minutes: 10
+    business-correlation-window-minutes: 5
+  
+  sources:
+    - name: "appdynamics"
+      priority: 1
+      weight: 0.4
+    - name: "opentelemetry"
+      priority: 2
+      weight: 0.3
+    - name: "frontend"
+      priority: 3
+      weight: 0.2
+    - name: "loadtest"
+      priority: 4
+      weight: 0.1
+
+---
+# Docker Profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE:http://eureka-server:8761/eureka/}
+
+# Docker-specific configurations
+monitoring:
+  git:
+    workspace: /app/monitoring-workspace
+
+appdynamics:
+  controller:
+    host: ${APPDYNAMICS_CONTROLLER_HOST_NAME:}
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: development
+
+logging:
+  level:
+    com.ecommerce.monitoring: TRACE
+    root: INFO
+
+monitoring:
+  automated-fixing:
+    enabled: false # Disable automated fixes in development
+  
+  git:
+    repository-url: file:///Users/shiva/Projects/ecommerce-microservices
+    workspace: /tmp/monitoring-dev-workspace
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: production
+
+logging:
+  level:
+    com.ecommerce.monitoring: INFO
+    root: WARN
+
+monitoring:
+  automated-fixing:
+    enabled: true
+    max-concurrent-fixes: 5
+    confidence-threshold: 0.9 # Higher threshold for production
+    occurrence-threshold: 5

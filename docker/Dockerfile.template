@@ -1,0 +1,92 @@
+# Multi-stage Dockerfile template for all microservices with AppDynamics Java Agent 25.7.0.37201
+FROM appdynamics/java-agent:25.7.0.37201 AS appdynamics-agent
+
+ARG SERVICE_NAME
+ARG SERVICE_PORT
+
+# Build stage
+FROM eclipse-temurin:17-jdk AS builder
+
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+
+# Install Maven and build the application
+RUN apt-get update && apt-get install -y maven && \
+    mvn clean package -DskipTests && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Runtime stage
+FROM eclipse-temurin:17-jre
+
+ARG SERVICE_NAME
+ARG SERVICE_PORT
+ENV SERVICE_NAME=${SERVICE_NAME}
+ENV SERVICE_PORT=${SERVICE_PORT}
+
+WORKDIR /app
+
+# Create non-root user for security (Debian syntax)
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -m appuser
+
+# Install required packages (Debian syntax)
+RUN apt-get update && apt-get install -y curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Copy AppDynamics Java Agent from official image
+COPY --from=appdynamics-agent /opt/appdynamics /opt/appdynamics
+
+# Copy application JAR
+COPY --from=builder /app/target/*.jar app.jar
+
+# Create logs directory for AppDynamics
+RUN mkdir -p /app/logs && \
+    chown -R appuser:appgroup /app /opt/appdynamics
+
+# Switch to non-root user
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:${SERVICE_PORT}/actuator/health || exit 1
+
+# AppDynamics Configuration
+ENV APPDYNAMICS_AGENT_APPLICATION_NAME="ecommerce"
+ENV APPDYNAMICS_AGENT_TIER_NAME="${SERVICE_NAME}"
+ENV APPDYNAMICS_AGENT_NODE_NAME="${SERVICE_NAME}-\${HOSTNAME}"
+ENV APPDYNAMICS_CONTROLLER_HOST_NAME="bny-ucf.saas.appdynamics.com"
+ENV APPDYNAMICS_CONTROLLER_PORT="443"
+ENV APPDYNAMICS_CONTROLLER_SSL_ENABLED="true"
+ENV APPDYNAMICS_AGENT_ACCOUNT_NAME="bny-ucf"
+ENV APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY="t9enedz21n01"
+ENV APPDYNAMICS_JAVA_AGENT_REUSE_NODE_NAME="true"
+ENV APPDYNAMICS_JAVA_AGENT_REUSE_NODE_NAME_PREFIX="${SERVICE_NAME}"
+
+# JVM Configuration with AppDynamics Agent
+ENV JAVA_OPTS="-server \
+    -Xmx512m \
+    -Xms256m \
+    -XX:+UseG1GC \
+    -XX:MaxGCPauseMillis=200 \
+    -XX:+UseStringDeduplication \
+    -XX:+OptimizeStringConcat \
+    -Djava.security.egd=file:/dev/./urandom \
+    -Dspring.backgroundpreinitializer.ignore=true \
+    -javaagent:/opt/appdynamics/javaagent.jar"
+
+# AppDynamics Agent Configuration
+ENV APPDYNAMICS_OPTS="-Dappdynamics.agent.applicationName=\${APPDYNAMICS_AGENT_APPLICATION_NAME} \
+    -Dappdynamics.agent.tierName=\${APPDYNAMICS_AGENT_TIER_NAME} \
+    -Dappdynamics.agent.nodeName=\${APPDYNAMICS_AGENT_NODE_NAME} \
+    -Dappdynamics.controller.hostName=\${APPDYNAMICS_CONTROLLER_HOST_NAME} \
+    -Dappdynamics.controller.port=\${APPDYNAMICS_CONTROLLER_PORT} \
+    -Dappdynamics.controller.ssl.enabled=\${APPDYNAMICS_CONTROLLER_SSL_ENABLED} \
+    -Dappdynamics.agent.accountName=\${APPDYNAMICS_AGENT_ACCOUNT_NAME} \
+    -Dappdynamics.agent.accountAccessKey=\${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY} \
+    -Dappdynamics.agent.logs.dir=/app/logs \
+    -Dappdynamics.agent.runtime.dir=/opt/appdynamics/runtime"
+
+EXPOSE ${SERVICE_PORT}
+
+ENTRYPOINT ["sh", "-c", "echo 'Starting with AppDynamics Java Agent 25.7.0.37201 (official image)...'; java $JAVA_OPTS $APPDYNAMICS_OPTS -jar app.jar"]

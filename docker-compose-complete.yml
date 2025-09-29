@@ -1,0 +1,529 @@
+# Complete Enterprise Ecommerce Platform - Multi-Portal Docker Composition
+# Supports: Customer Portal, Admin Dashboard, Vendor Portal, Mobile PWA
+# With comprehensive monitoring, security, and analytics
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # DATABASE SERVICES
+  # ============================================================================
+  
+  # MongoDB Database with Enhanced Schema
+  mongodb:
+    image: mongo:7.0
+    container_name: ecommerce-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-defaultpassword}
+      MONGO_INITDB_DATABASE: ecommerce
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./mongodb-scripts:/docker-entrypoint-initdb.d/scripts:ro
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================================================
+  # CORE MICROSERVICES (EXISTING)
+  # ============================================================================
+  
+  # Eureka Service Discovery
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # User Service
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "8082:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:${MONGO_ROOT_PASSWORD:-defaultpassword}@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+    depends_on:
+      - mongodb
+      - eureka-server
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # Product Service
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    ports:
+      - "8083:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:${MONGO_ROOT_PASSWORD:-defaultpassword}@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+    depends_on:
+      - mongodb
+      - eureka-server
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # Cart Service
+  cart-service:
+    build: ./cart-service
+    container_name: cart-service
+    ports:
+      - "8084:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:${MONGO_ROOT_PASSWORD:-defaultpassword}@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+    depends_on:
+      - mongodb
+      - eureka-server
+      - product-service
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # Order Service
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8085:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:${MONGO_ROOT_PASSWORD:-defaultpassword}@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+    depends_on:
+      - mongodb
+      - eureka-server
+      - product-service
+      - cart-service
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+    depends_on:
+      - eureka-server
+      - user-service
+      - product-service
+      - cart-service
+      - order-service
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # ============================================================================
+  # INTELLIGENT MONITORING SERVICE
+  # ============================================================================
+  
+  # Enhanced Intelligent Monitoring Service
+  intelligent-monitoring-service:
+    build: ./intelligent-monitoring-service
+    container_name: intelligent-monitoring-service
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:${MONGO_ROOT_PASSWORD:-defaultpassword}@mongodb:27017/ecommerce?authSource=admin
+      - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
+      - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
+      - MONITORING_GIT_REPOSITORY_URL=${MONITORING_GIT_REPOSITORY_URL:-}
+      - MONITORING_GIT_USERNAME=${MONITORING_GIT_USERNAME:-}
+      - MONITORING_GIT_TOKEN=${MONITORING_GIT_TOKEN:-}
+      - ENABLE_AUTO_FIXING=true
+      - ENABLE_CROSS_PLATFORM_CORRELATION=true
+    depends_on:
+      - mongodb
+      - eureka-server
+      - api-gateway
+      - otel-collector
+    networks:
+      - ecommerce-network
+    restart: on-failure
+    volumes:
+      - monitoring_workspace:/app/monitoring-workspace
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # ============================================================================
+  # MULTI-PORTAL FRONTEND ARCHITECTURE
+  # ============================================================================
+
+  # Apache Multi-Portal Frontend Server
+  apache-multi-portal:
+    build: ./apache-multi-portal
+    container_name: apache-multi-portal
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - API_GATEWAY_URL=http://api-gateway:8080
+      - MONITORING_SERVICE_URL=http://intelligent-monitoring-service:8090
+      - GRAFANA_URL=http://grafana:3000
+      - PROMETHEUS_URL=http://prometheus:9090
+    depends_on:
+      - api-gateway
+      - intelligent-monitoring-service
+      - customer-portal
+      - admin-dashboard
+      - vendor-portal
+      - mobile-app
+    networks:
+      - ecommerce-network
+    restart: on-failure
+    volumes:
+      - ./apache-multi-portal/ssl:/etc/ssl:ro
+      - customer_portal_dist:/var/www/customer-portal:ro
+      - admin_dashboard_dist:/var/www/admin-dashboard:ro
+      - vendor_portal_dist:/var/www/vendor-portal:ro
+      - mobile_app_dist:/var/www/mobile-app:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Customer Portal (Angular 17+ PWA)
+  customer-portal:
+    build: ./customer-portal
+    container_name: customer-portal
+    environment:
+      - NODE_ENV=production
+      - API_BASE_URL=/api
+      - OTEL_SERVICE_NAME=customer-portal
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    volumes:
+      - customer_portal_dist:/app/dist/customer-portal
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Admin Dashboard (Angular 17+ with Advanced Monitoring)
+  admin-dashboard:
+    build: ./admin-dashboard
+    container_name: admin-dashboard
+    environment:
+      - NODE_ENV=production
+      - API_BASE_URL=/api
+      - MONITORING_API_URL=/monitoring
+      - GRAFANA_URL=/grafana
+      - PROMETHEUS_URL=/prometheus
+      - OTEL_SERVICE_NAME=admin-dashboard
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    volumes:
+      - admin_dashboard_dist:/app/dist/admin-dashboard
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Vendor Portal (Angular 17+ with Enhanced Security)
+  vendor-portal:
+    build: ./vendor-portal
+    container_name: vendor-portal
+    environment:
+      - NODE_ENV=production
+      - API_BASE_URL=/api
+      - SECURITY_LEVEL=high
+      - ENABLE_AUDIT_LOGGING=true
+      - OTEL_SERVICE_NAME=vendor-portal
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    volumes:
+      - vendor_portal_dist:/app/dist/vendor-portal
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Mobile PWA (Angular 17+ with Offline Capabilities)
+  mobile-app:
+    build: ./mobile-app
+    container_name: mobile-app
+    environment:
+      - NODE_ENV=production
+      - API_BASE_URL=/api
+      - ENABLE_OFFLINE_MODE=true
+      - ENABLE_PUSH_NOTIFICATIONS=true
+      - OTEL_SERVICE_NAME=mobile-app
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    volumes:
+      - mobile_app_dist:/app/dist/mobile-app
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # MONITORING AND OBSERVABILITY STACK
+  # ============================================================================
+
+  # OpenTelemetry Collector (Enhanced)
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.89.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol-contrib/otel-collector.yml"]
+    volumes:
+      - ./monitoring/otel-collector.yml:/etc/otelcol-contrib/otel-collector.yml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8889:8889"   # Prometheus metrics
+      - "13133:13133" # Health check
+    depends_on:
+      - tempo
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:13133/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Grafana Tempo for Trace Storage
+  tempo:
+    image: grafana/tempo:2.3.1
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - ./monitoring/tempo.yml:/etc/tempo.yml
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo HTTP
+      - "4317"        # OTLP gRPC (internal)
+      - "4318"        # OTLP HTTP (internal)
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Prometheus for Metrics Collection
+  prometheus:
+    image: prom/prometheus:v2.47.2
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.enable-remote-write-receiver'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Grafana for Visualization and Dashboards
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=YOUR_ADMIN_PASSWORD
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - tempo
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # ============================================================================
+  # LOAD TESTING AND PERFORMANCE
+  # ============================================================================
+
+  # Enhanced Load Generator with Multi-Portal Testing
+  load-generator:
+    build: ./load-generator
+    container_name: load-generator
+    environment:
+      - TARGET_BASE_URL=http://apache-multi-portal
+      - CUSTOMER_PORTAL_URL=http://apache-multi-portal
+      - ADMIN_DASHBOARD_URL=http://apache-multi-portal
+      - VENDOR_PORTAL_URL=http://apache-multi-portal
+      - MOBILE_APP_URL=http://apache-multi-portal
+      - CONCURRENT_USERS=10
+      - TEST_DURATION=3600  # 1 hour
+      - SPAWN_RATE=1
+      - ENABLE_MULTI_PORTAL_TESTING=true
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=load-generator
+    depends_on:
+      - apache-multi-portal
+      - otel-collector
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    profiles:
+      - load-testing
+
+  # ============================================================================
+  # ADDITIONAL SERVICES
+  # ============================================================================
+
+  # Redis for Caching and Session Management
+  redis:
+    image: redis:7.2-alpine
+    container_name: ecommerce-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Load Balancer (Alternative)
+  nginx-loadbalancer:
+    image: nginx:alpine
+    container_name: nginx-loadbalancer
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - apache-multi-portal
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    profiles:
+      - nginx-lb
+
+  # WebSocket Service for Real-time Communications
+  websocket-service:
+    build: ./websocket-service
+    container_name: websocket-service
+    ports:
+      - "8091:8091"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+    depends_on:
+      - redis
+      - mongodb
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  # File Upload Service
+  file-upload-service:
+    build: ./file-upload-service
+    container_name: file-upload-service
+    ports:
+      - "8092:8092"
+    environment:
+      - NODE_ENV=production
+      - UPLOAD_PATH=/uploads
+      - MAX_FILE_SIZE=100MB
+      - ALLOWED_EXTENSIONS=jpg,jpeg,png,gif,pdf,doc,docx
+    volumes:
+      - file_uploads:/uploads
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+volumes:
+  # Database volumes
+  mongodb_data:
+  redis_data:
+  
+  # Monitoring volumes
+  tempo_data:
+  monitoring_workspace:
+  prometheus_data:
+  grafana_data:
+  
+  # Frontend build volumes
+  customer_portal_dist:
+  admin_dashboard_dist:
+  vendor_portal_dist:
+  mobile_app_dist:
+  
+  # File storage volumes
+  file_uploads:
+
+networks:
+  ecommerce-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

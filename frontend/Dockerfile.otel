@@ -1,0 +1,77 @@
+# Apache HTTP Server with OpenTelemetry monitoring
+FROM httpd:2.4-alpine AS base
+
+# Install build dependencies
+RUN apk add --no-cache \
+    curl \
+    wget \
+    tar \
+    build-base \
+    apache2-dev \
+    cmake \
+    git \
+    pkgconfig
+
+# Download and install OpenTelemetry C++ SDK
+WORKDIR /tmp
+RUN git clone --recurse-submodules https://github.com/open-telemetry/opentelemetry-cpp.git && \
+    cd opentelemetry-cpp && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -DWITH_OTLP_GRPC=ON \
+          -DWITH_OTLP_HTTP=ON \
+          -DWITH_EXAMPLES=OFF \
+          -DWITH_TESTS=OFF \
+          .. && \
+    make -j$(nproc) && \
+    make install
+
+# Download and build mod_otel for Apache
+RUN git clone https://github.com/open-telemetry/opentelemetry-cpp-contrib.git && \
+    cd opentelemetry-cpp-contrib/instrumentation/httpd && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_BUILD_TYPE=Release .. && \
+    make -j$(nproc)
+
+# Production stage with minimal Apache + OpenTelemetry
+FROM httpd:2.4-alpine
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    libstdc++ \
+    libgcc \
+    curl
+
+# Copy OpenTelemetry libraries and Apache module
+COPY --from=base /usr/local/lib/libopentelemetry* /usr/local/lib/
+COPY --from=base /tmp/opentelemetry-cpp-contrib/instrumentation/httpd/build/mod_otel.so /usr/local/apache2/modules/
+
+# Create OpenTelemetry configuration
+RUN mkdir -p /usr/local/apache2/conf/otel
+
+# Copy custom Apache configuration with OpenTelemetry
+COPY apache/httpd-otel.conf /usr/local/apache2/conf/httpd.conf
+COPY apache/otel-config.yml /usr/local/apache2/conf/otel/
+
+# Copy static HTML files
+COPY dist/ /usr/local/apache2/htdocs/
+
+# Create favicon and build info
+RUN touch /usr/local/apache2/htdocs/favicon.ico && \
+    echo "Build completed with OpenTelemetry at: $(date)" > /usr/local/apache2/htdocs/build-info.txt && \
+    echo "Apache HTTP Server with OpenTelemetry monitoring" >> /usr/local/apache2/htdocs/build-info.txt
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl --silent --fail http://localhost/health || exit 1
+
+# Expose port 80
+EXPOSE 80
+
+# Set library path for OpenTelemetry
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+
+# Start Apache with OpenTelemetry
+CMD ["httpd-foreground"]
