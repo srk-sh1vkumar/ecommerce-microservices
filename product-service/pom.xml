@@ -37,22 +37,7 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Resilience4j for Circuit Breaker Pattern -->
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-spring-boot2</artifactId>
-            <version>1.7.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-circuitbreaker</artifactId>
-            <version>1.7.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.resilience4j</groupId>
-            <artifactId>resilience4j-retry</artifactId>
-            <version>1.7.1</version>
-        </dependency>
+        <!-- Resilience4j is provided by common-lib (version 2.1.0 for Spring Boot 3) -->
 
         <!-- Redis for Caching -->
         <dependency>
