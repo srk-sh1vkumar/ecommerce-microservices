@@ -90,3 +90,6 @@ logs/
 dist/
 build/
 out/
+# Local files with credentials
+README.local.md
+README.md.backup

@@ -195,7 +195,7 @@ All requests go through the API Gateway at `http://localhost:8081`
 POST /api/users/register
 {
   "email": "user@example.com",
-  "password": "YOUR_SECURE_PASSWORD",
+  "password": "your_password_here",
   "firstName": "John",
   "lastName": "Doe"
 }
@@ -204,7 +204,7 @@ POST /api/users/register
 POST /api/users/login
 {
   "email": "user@example.com",
-  "password": "YOUR_SECURE_PASSWORD"
+  "password": "your_password_here"
 }
 
 # Get user profile
