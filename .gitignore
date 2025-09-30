@@ -94,3 +94,6 @@ out/
 README.local.md
 README.md.backup
 README-CREDENTIALS.txt
+
+# Local docker-compose with credentials
+docker-compose.yml.sanitized
