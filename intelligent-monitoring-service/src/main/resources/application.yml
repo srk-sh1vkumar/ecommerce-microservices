@@ -11,7 +11,7 @@ spring:
       database: ecommerce
   
   profiles:
-    active: docker,monitoring-proxy
+    active: docker
 
 # Eureka Configuration
 eureka:
