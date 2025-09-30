@@ -4,7 +4,6 @@ import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.function.Supplier;
@@ -34,7 +33,6 @@ import java.util.function.Supplier;
  * @author E-commerce Development Team
  * @version 2.0
  */
-@Component
 public class TracingHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(TracingHelper.class);

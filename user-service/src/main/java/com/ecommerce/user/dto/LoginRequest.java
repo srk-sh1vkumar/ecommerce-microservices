@@ -1,6 +1,6 @@
 package com.ecommerce.user.dto;
 
-import com.ecommerce.user.constants.SecurityConstants;
+import com.ecommerce.common.constants.SecurityConstants;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.Email;

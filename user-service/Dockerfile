@@ -56,10 +56,16 @@ ENV APPDYNAMICS_AGENT_JAR="-javaagent:/opt/appdynamics/javaagent.jar"
 # OpenTelemetry agent JAR
 ENV OTEL_JAVAAGENT_JAR="-javaagent:/app/opentelemetry-javaagent.jar"
 
-# AppDynamics system properties (runtime evaluation)
-ENV APPDYNAMICS_AGENT_PROPS="-Dappdynamics.agent.logs.dir=/app/logs -Dappdynamics.agent.runtime.dir=/opt/appdynamics/runtime -Dappdynamics.opentelemetry.enabled=true -Dappdynamics.opentelemetry.endpoint=http://otel-collector:4317 -Dappdynamics.opentelemetry.resource.attributes=service.name=user-service,service.version=1.0.0,deployment.environment=docker"
+# AppDynamics system properties (runtime evaluation) with performance optimization
+ENV APPDYNAMICS_AGENT_PROPS="-Dappdynamics.agent.logs.dir=/app/logs -Dappdynamics.agent.runtime.dir=/opt/appdynamics/runtime -Dappdynamics.opentelemetry.enabled=true -Dappdynamics.opentelemetry.endpoint=http://otel-collector:4317 -Dappdynamics.opentelemetry.resource.attributes=service.name=user-service,service.version=1.0.0,deployment.environment=docker -Dappagent.start.timeout=3000 -Dappdynamics.agent.maxMetrics=100 -Dappdynamics.controller.connect.retry.limit=3"
+
+# OpenTelemetry configuration with exporters enabled
+ENV OTEL_METRICS_EXPORTER="otlp"
+ENV OTEL_LOGS_EXPORTER="otlp"
+ENV OTEL_EXPORTER_OTLP_TIMEOUT="5000"
+ENV OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4317"
 
 EXPOSE 8081
 
-# Start with both AppDynamics and OpenTelemetry agents
-ENTRYPOINT ["sh", "-c", "echo 'Starting with AppDynamics + OpenTelemetry agents...'; java $JAVA_OPTS_BASE $OTEL_JAVAAGENT_JAR $APPDYNAMICS_AGENT_JAR -Dappdynamics.agent.applicationName=\"$APPDYNAMICS_AGENT_APPLICATION_NAME\" -Dappdynamics.agent.tierName=\"$APPDYNAMICS_AGENT_TIER_NAME\" -Dappdynamics.agent.nodeName=\"$APPDYNAMICS_AGENT_NODE_NAME\" -Dappdynamics.controller.hostName=\"$APPDYNAMICS_CONTROLLER_HOST_NAME\" -Dappdynamics.controller.port=\"$APPDYNAMICS_CONTROLLER_PORT\" -Dappdynamics.controller.ssl.enabled=\"$APPDYNAMICS_CONTROLLER_SSL_ENABLED\" -Dappdynamics.agent.accountName=\"$APPDYNAMICS_AGENT_ACCOUNT_NAME\" -Dappdynamics.agent.accountAccessKey=\"$APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY\" $APPDYNAMICS_AGENT_PROPS -jar app.jar"]
+# Start with both AppDynamics and OpenTelemetry agents (optimized)
+ENTRYPOINT ["sh", "-c", "echo 'Starting with optimized AppDynamics + OpenTelemetry agents...'; java $JAVA_OPTS_BASE $OTEL_JAVAAGENT_JAR $APPDYNAMICS_AGENT_JAR -Dappdynamics.agent.applicationName=\"$APPDYNAMICS_AGENT_APPLICATION_NAME\" -Dappdynamics.agent.tierName=\"$APPDYNAMICS_AGENT_TIER_NAME\" -Dappdynamics.agent.nodeName=\"$APPDYNAMICS_AGENT_NODE_NAME\" -Dappdynamics.controller.hostName=\"$APPDYNAMICS_CONTROLLER_HOST_NAME\" -Dappdynamics.controller.port=\"$APPDYNAMICS_CONTROLLER_PORT\" -Dappdynamics.controller.ssl.enabled=\"$APPDYNAMICS_CONTROLLER_SSL_ENABLED\" -Dappdynamics.agent.accountName=\"$APPDYNAMICS_AGENT_ACCOUNT_NAME\" -Dappdynamics.agent.accountAccessKey=\"$APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY\" $APPDYNAMICS_AGENT_PROPS -jar app.jar"]

@@ -3,7 +3,7 @@ package com.ecommerce.user.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.index.Indexed;
-import com.ecommerce.user.constants.SecurityConstants;
+import com.ecommerce.common.constants.SecurityConstants;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
