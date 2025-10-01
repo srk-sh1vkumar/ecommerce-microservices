@@ -131,6 +131,50 @@ public class ProductService {
     }
 
     /**
+     * Bulk update stock for multiple products.
+     * Reduces N+1 query problem by processing all updates in a single operation.
+     *
+     * @param updates List of stock update requests
+     * @return Map of productId to success/failure
+     */
+    public java.util.Map<String, Boolean> bulkUpdateStock(java.util.List<com.ecommerce.product.dto.StockUpdateRequest> updates) {
+        logger.info("Bulk updating stock for {} products", updates.size());
+        java.util.Map<String, Boolean> results = new java.util.HashMap<>();
+
+        // Fetch all products in one query
+        java.util.List<String> productIds = updates.stream()
+                .map(com.ecommerce.product.dto.StockUpdateRequest::getProductId)
+                .collect(java.util.stream.Collectors.toList());
+
+        java.util.List<Product> products = productRepository.findAllById(productIds);
+        java.util.Map<String, Product> productMap = products.stream()
+                .collect(java.util.stream.Collectors.toMap(Product::getId, p -> p));
+
+        // Process each update
+        for (com.ecommerce.product.dto.StockUpdateRequest update : updates) {
+            Product product = productMap.get(update.getProductId());
+            if (product != null && product.getStockQuantity() >= update.getQuantity()) {
+                product.setStockQuantity(product.getStockQuantity() - update.getQuantity());
+                results.put(update.getProductId(), true);
+            } else {
+                results.put(update.getProductId(), false);
+                logger.warn("Insufficient stock for product: {}", update.getProductId());
+            }
+        }
+
+        // Save all updates in batch
+        if (!products.isEmpty()) {
+            productRepository.saveAll(products);
+        }
+
+        logger.info("Bulk stock update completed: {} successful, {} failed",
+                results.values().stream().filter(v -> v).count(),
+                results.values().stream().filter(v -> !v).count());
+
+        return results;
+    }
+
+    /**
      * Execute database operations with circuit breaker and retry patterns
      */
     private <T> T executeWithCircuitBreakerAndRetry(Supplier<T> supplier, String operation) {

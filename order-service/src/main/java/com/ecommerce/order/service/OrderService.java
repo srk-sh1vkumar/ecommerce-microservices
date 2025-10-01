@@ -30,18 +30,34 @@ public class OrderService {
     @Transactional
     public Order checkout(CheckoutRequest request) {
         List<CartItemDTO> cartItems = cartServiceClient.getCartItems(request.getUserEmail());
-        
+
         if (cartItems.isEmpty()) {
             throw new RuntimeException("Cart is empty");
         }
-        
-        for (CartItemDTO item : cartItems) {
-            Boolean stockUpdated = productServiceClient.updateStock(item.getProductId(), item.getQuantity());
-            if (!stockUpdated) {
-                throw new RuntimeException("Insufficient stock for product: " + item.getProductName());
-            }
+
+        // Bulk update stock - reduces N+1 query problem
+        List<com.ecommerce.order.dto.StockUpdateRequest> stockUpdates = cartItems.stream()
+                .map(item -> new com.ecommerce.order.dto.StockUpdateRequest(item.getProductId(), item.getQuantity()))
+                .collect(java.util.stream.Collectors.toList());
+
+        com.ecommerce.order.dto.BulkStockUpdateResponse response = productServiceClient.bulkUpdateStock(stockUpdates);
+
+        if (!response.allSuccessful()) {
+            // Find which products failed
+            List<String> failedProducts = response.getResults().entrySet().stream()
+                    .filter(entry -> !entry.getValue())
+                    .map(entry -> {
+                        CartItemDTO item = cartItems.stream()
+                                .filter(ci -> ci.getProductId().equals(entry.getKey()))
+                                .findFirst()
+                                .orElse(null);
+                        return item != null ? item.getProductName() : entry.getKey();
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+
+            throw new RuntimeException("Insufficient stock for products: " + String.join(", ", failedProducts));
         }
-        
+
         BigDecimal totalAmount = cartItems.stream()
                 .map(item -> item.getProductPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

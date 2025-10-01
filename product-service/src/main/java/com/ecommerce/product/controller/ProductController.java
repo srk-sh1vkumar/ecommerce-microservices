@@ -94,4 +94,13 @@ public class ProductController {
         boolean updated = productService.updateStock(id, quantity);
         return ResponseEntity.ok(updated);
     }
+
+    @PutMapping("/stock/bulk")
+    public ResponseEntity<com.ecommerce.product.dto.BulkStockUpdateResponse> bulkUpdateStock(
+            @jakarta.validation.Valid @RequestBody java.util.List<com.ecommerce.product.dto.StockUpdateRequest> updates) {
+        java.util.Map<String, Boolean> results = productService.bulkUpdateStock(updates);
+        com.ecommerce.product.dto.BulkStockUpdateResponse response =
+                new com.ecommerce.product.dto.BulkStockUpdateResponse(results);
+        return ResponseEntity.ok(response);
+    }
 }
