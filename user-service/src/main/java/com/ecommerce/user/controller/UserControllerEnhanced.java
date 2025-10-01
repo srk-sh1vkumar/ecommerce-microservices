@@ -4,6 +4,7 @@ import com.ecommerce.common.dto.ApiResponse;
 import com.ecommerce.common.exception.ErrorResponse;
 import com.ecommerce.user.dto.AuthResponse;
 import com.ecommerce.user.dto.LoginRequest;
+import com.ecommerce.user.dto.UserResponseDTO;
 import com.ecommerce.user.entity.User;
 import com.ecommerce.user.service.UserServiceRefactored;
 import io.swagger.v3.oas.annotations.Operation;
@@ -81,7 +82,7 @@ public class UserControllerEnhanced {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "201",
                     description = "User created successfully",
-                    content = @Content(schema = @Schema(implementation = User.class))
+                    content = @Content(schema = @Schema(implementation = UserResponseDTO.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
@@ -95,13 +96,13 @@ public class UserControllerEnhanced {
             )
     })
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<User>> register(
+    public ResponseEntity<ApiResponse<UserResponseDTO>> register(
             @Parameter(description = "User registration data", required = true)
             @Valid @RequestBody User user) {
 
         logger.info("Registration request for email: {}", user.getEmail());
 
-        User savedUser = userService.register(user);
+        UserResponseDTO savedUser = userService.register(user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(savedUser, "User registered successfully"));
     }
@@ -114,7 +115,7 @@ public class UserControllerEnhanced {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
                     description = "User found",
-                    content = @Content(schema = @Schema(implementation = User.class))
+                    content = @Content(schema = @Schema(implementation = UserResponseDTO.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
@@ -123,13 +124,13 @@ public class UserControllerEnhanced {
             )
     })
     @GetMapping("/{email}")
-    public ResponseEntity<ApiResponse<User>> getUserByEmail(
+    public ResponseEntity<ApiResponse<UserResponseDTO>> getUserByEmail(
             @Parameter(description = "User email address", required = true, example = "user@example.com")
             @PathVariable String email) {
 
         logger.info("Get user request for email: {}", email);
 
-        User user = userService.getUserByEmail(email);
+        UserResponseDTO user = userService.getUserByEmail(email);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 
@@ -141,7 +142,7 @@ public class UserControllerEnhanced {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
                     description = "Profile updated successfully",
-                    content = @Content(schema = @Schema(implementation = User.class))
+                    content = @Content(schema = @Schema(implementation = UserResponseDTO.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
@@ -155,7 +156,7 @@ public class UserControllerEnhanced {
             )
     })
     @PutMapping("/{userId}")
-    public ResponseEntity<ApiResponse<User>> updateProfile(
+    public ResponseEntity<ApiResponse<UserResponseDTO>> updateProfile(
             @Parameter(description = "User ID", required = true)
             @PathVariable String userId,
             @Parameter(description = "Updated user data", required = true)
@@ -163,7 +164,7 @@ public class UserControllerEnhanced {
 
         logger.info("Update profile request for userId: {}", userId);
 
-        User updatedUser = userService.updateUserProfile(userId, updateData);
+        UserResponseDTO updatedUser = userService.updateUserProfile(userId, updateData);
         return ResponseEntity.ok(ApiResponse.success(updatedUser, "Profile updated successfully"));
     }
 

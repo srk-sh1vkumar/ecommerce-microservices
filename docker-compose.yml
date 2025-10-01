@@ -18,6 +18,21 @@ services:
     networks:
       - ecommerce-network
 
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Eureka Service Discovery
   eureka-server:
     build: ./eureka-server
@@ -67,6 +82,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - SPRING_DATA_MONGODB_URI=mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
       - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
@@ -75,6 +92,7 @@ services:
       - OTEL_RESOURCE_ATTRIBUTES=service.name=product-service,service.version=1.0.0
     depends_on:
       - mongodb
+      - redis
       - eureka-server
     networks:
       - ecommerce-network
@@ -293,6 +311,7 @@ services:
 
 volumes:
   mongodb_data:
+  redis_data:
   tempo_data:
   monitoring_workspace:
   prometheus_data:

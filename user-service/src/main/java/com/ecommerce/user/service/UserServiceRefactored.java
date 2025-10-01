@@ -7,7 +7,9 @@ import com.ecommerce.common.util.JwtUtil;
 import com.ecommerce.common.util.ValidationUtils;
 import com.ecommerce.user.dto.AuthResponse;
 import com.ecommerce.user.dto.LoginRequest;
+import com.ecommerce.user.dto.UserResponseDTO;
 import com.ecommerce.user.entity.User;
+import com.ecommerce.user.mapper.UserMapper;
 import com.ecommerce.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -41,14 +43,17 @@ public class UserServiceRefactored {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final UserMapper userMapper;
 
     @Autowired
     public UserServiceRefactored(UserRepository userRepository,
                                  PasswordEncoder passwordEncoder,
-                                 JwtUtil jwtUtil) {
+                                 JwtUtil jwtUtil,
+                                 UserMapper userMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.userMapper = userMapper;
     }
 
     /**
@@ -100,10 +105,10 @@ public class UserServiceRefactored {
      * Registers a new user in the system.
      *
      * @param user User registration data
-     * @return Created user without password
+     * @return UserResponseDTO without password
      * @throws ServiceException if validation fails or email exists
      */
-    public User register(@Valid User user) {
+    public UserResponseDTO register(@Valid User user) {
         logger.info("Registration attempt for email: {}", user.getEmail());
 
         // Validate input using common utilities
@@ -137,23 +142,21 @@ public class UserServiceRefactored {
         // Save user
         User savedUser = userRepository.save(user);
 
-        // Remove password from response
-        savedUser.setPassword(null);
-
         logger.info("User successfully registered: {}", savedUser.getEmail());
 
-        return savedUser;
+        // Convert to DTO (automatically excludes password)
+        return userMapper.toResponseDTO(savedUser);
     }
 
     /**
      * Retrieves a user by email address.
      *
      * @param email User's email
-     * @return User without password
+     * @return UserResponseDTO without password
      * @throws ServiceException if user not found
      */
     @Transactional(readOnly = true)
-    public User getUserByEmail(String email) {
+    public UserResponseDTO getUserByEmail(String email) {
         logger.debug("Retrieving user by email: {}", email);
 
         ValidationUtils.validateEmail(email);
@@ -168,10 +171,8 @@ public class UserServiceRefactored {
                     );
                 });
 
-        // Remove password for security
-        user.setPassword(null);
-
-        return user;
+        // Convert to DTO (automatically excludes password)
+        return userMapper.toResponseDTO(user);
     }
 
     /**
@@ -179,10 +180,10 @@ public class UserServiceRefactored {
      *
      * @param userId User ID
      * @param updateData Updated user data
-     * @return Updated user without password
+     * @return UserResponseDTO without password
      * @throws ServiceException if user not found or validation fails
      */
-    public User updateUserProfile(String userId, @Valid User updateData) {
+    public UserResponseDTO updateUserProfile(String userId, @Valid User updateData) {
         logger.info("Updating profile for user ID: {}", userId);
 
         ValidationUtils.validateId(userId, "User");
@@ -222,11 +223,11 @@ public class UserServiceRefactored {
         }
 
         User updatedUser = userRepository.save(existingUser);
-        updatedUser.setPassword(null);
 
         logger.info("Profile updated successfully for user: {}", updatedUser.getEmail());
 
-        return updatedUser;
+        // Convert to DTO (automatically excludes password)
+        return userMapper.toResponseDTO(updatedUser);
     }
 
     /**

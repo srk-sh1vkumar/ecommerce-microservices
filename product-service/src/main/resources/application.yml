@@ -32,6 +32,9 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://admin:${MONGO_ROOT_PASSWORD:-defaultpassword}@mongodb:27017/ecommerce?authSource=admin}
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
 
 eureka:
   client:
