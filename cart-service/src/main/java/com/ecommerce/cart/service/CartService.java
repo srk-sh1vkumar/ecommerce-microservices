@@ -6,6 +6,8 @@ import com.ecommerce.cart.dto.ProductDTO;
 import com.ecommerce.cart.dto.AddToCartRequest;
 import com.ecommerce.cart.client.ProductServiceClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,10 +24,12 @@ public class CartService {
     @Autowired
     private ProductServiceClient productServiceClient;
     
+    @Cacheable(value = "userCartItems", key = "#userEmail")
     public List<CartItem> getCartItems(String userEmail) {
         return cartItemRepository.findByUserEmail(userEmail);
     }
     
+    @CacheEvict(value = {"userCartItems", "cartItemCount"}, key = "#request.userEmail")
     public CartItem addToCart(AddToCartRequest request) {
         ProductDTO product = productServiceClient.getProductById(request.getProductId());
         
@@ -56,6 +60,7 @@ public class CartService {
         }
     }
     
+    @CacheEvict(value = {"userCartItems", "cartItemCount"}, key = "#userEmail")
     public CartItem updateCartItemQuantity(String userEmail, String productId, Integer quantity) {
         CartItem item = cartItemRepository.findByUserEmailAndProductId(userEmail, productId)
                 .orElseThrow(() -> new RuntimeException("Cart item not found"));
@@ -69,11 +74,13 @@ public class CartService {
         return cartItemRepository.save(item);
     }
     
+    @CacheEvict(value = {"userCartItems", "cartItemCount"}, key = "#userEmail")
     @Transactional
     public void removeFromCart(String userEmail, String productId) {
         cartItemRepository.deleteByUserEmailAndProductId(userEmail, productId);
     }
     
+    @CacheEvict(value = {"userCartItems", "cartItemCount"}, key = "#userEmail")
     @Transactional
     public void clearCart(String userEmail) {
         cartItemRepository.deleteByUserEmail(userEmail);

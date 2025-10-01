@@ -15,6 +15,8 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -155,6 +157,7 @@ public class UserServiceRefactored {
      * @return UserResponseDTO without password
      * @throws ServiceException if user not found
      */
+    @Cacheable(value = "userByEmail", key = "#email")
     @Transactional(readOnly = true)
     public UserResponseDTO getUserByEmail(String email) {
         logger.debug("Retrieving user by email: {}", email);
@@ -183,6 +186,7 @@ public class UserServiceRefactored {
      * @return UserResponseDTO without password
      * @throws ServiceException if user not found or validation fails
      */
+    @CacheEvict(value = {"user", "userByEmail"}, allEntries = true)
     public UserResponseDTO updateUserProfile(String userId, @Valid User updateData) {
         logger.info("Updating profile for user ID: {}", userId);
 
@@ -236,6 +240,7 @@ public class UserServiceRefactored {
      * @param userId User ID to delete
      * @throws ServiceException if user not found
      */
+    @CacheEvict(value = {"user", "userByEmail", "emailExists"}, allEntries = true)
     public void deleteUser(String userId) {
         logger.info("Deleting user with ID: {}", userId);
 
@@ -258,6 +263,7 @@ public class UserServiceRefactored {
      * @param email User email
      * @return true if user exists
      */
+    @Cacheable(value = "emailExists", key = "#email")
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         ValidationUtils.validateEmail(email);

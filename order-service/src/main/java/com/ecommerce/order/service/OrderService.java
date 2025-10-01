@@ -8,6 +8,8 @@ import com.ecommerce.order.dto.CheckoutRequest;
 import com.ecommerce.order.client.CartServiceClient;
 import com.ecommerce.order.client.ProductServiceClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class OrderService {
     @Autowired
     private ProductServiceClient productServiceClient;
     
+    @CacheEvict(value = {"userOrders", "ordersByStatus"}, allEntries = true)
     @Transactional
     public Order checkout(CheckoutRequest request) {
         List<CartItemDTO> cartItems = cartServiceClient.getCartItems(request.getUserEmail());
@@ -82,10 +85,12 @@ public class OrderService {
         return orderRepository.save(order);
     }
     
+    @Cacheable(value = "userOrders", key = "#userEmail")
     public List<Order> getOrderHistory(String userEmail) {
         return orderRepository.findByUserEmailOrderByOrderDateDesc(userEmail);
     }
     
+    @Cacheable(value = "order", key = "#orderId")
     public Order getOrderById(String orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));

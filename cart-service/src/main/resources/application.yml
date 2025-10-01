@@ -7,6 +7,12 @@ spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/ecommerce
+  cache:
+    type: redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 eureka:
   client:
@@ -32,6 +38,9 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin}
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
 
 eureka:
   client:
