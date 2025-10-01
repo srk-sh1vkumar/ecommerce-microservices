@@ -4,21 +4,30 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Document(collection = "orders")
+@CompoundIndexes({
+    @CompoundIndex(name = "user_date_idx", def = "{'userEmail': 1, 'orderDate': -1}"),
+    @CompoundIndex(name = "status_date_idx", def = "{'status': 1, 'orderDate': -1}"),
+    @CompoundIndex(name = "user_status_idx", def = "{'userEmail': 1, 'status': 1}")
+})
 public class Order {
     @Id
     private String id;
-    
+
     @Indexed
     private String userEmail;
-    
+
     private BigDecimal totalAmount;
+    @Indexed
     private OrderStatus status = OrderStatus.PENDING;
     private String shippingAddress;
+    @Indexed
     private LocalDateTime orderDate = LocalDateTime.now();
     private List<OrderItem> orderItems;
     

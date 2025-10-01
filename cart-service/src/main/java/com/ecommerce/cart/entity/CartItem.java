@@ -3,17 +3,24 @@ package com.ecommerce.cart.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Document(collection = "cart_items")
+@CompoundIndexes({
+    @CompoundIndex(name = "user_product_idx", def = "{'userEmail': 1, 'productId': 1}", unique = true),
+    @CompoundIndex(name = "user_added_idx", def = "{'userEmail': 1, 'addedAt': -1}")
+})
 public class CartItem {
     @Id
     private String id;
-    
+
     @Indexed
     private String userEmail;
-    
+
+    @Indexed
     private String productId;
     private String productName;
     private BigDecimal productPrice;

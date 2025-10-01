@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cart")
-@CrossOrigin(origins = "*")
 public class CartController {
     
     @Autowired
@@ -25,7 +24,7 @@ public class CartController {
     }
     
     @PostMapping("/add")
-    public ResponseEntity<CartItem> addToCart(@RequestBody AddToCartRequest request) {
+    public ResponseEntity<CartItem> addToCart(@jakarta.validation.Valid @RequestBody AddToCartRequest request) {
         try {
             CartItem item = cartService.addToCart(request);
             return ResponseEntity.ok(item);
@@ -33,11 +32,13 @@ public class CartController {
             return ResponseEntity.badRequest().build();
         }
     }
-    
+
     @PutMapping("/{userEmail}/{productId}")
     public ResponseEntity<CartItem> updateCartItemQuantity(
             @PathVariable String userEmail,
             @PathVariable String productId,
+            @jakarta.validation.constraints.Min(value = 1, message = "Quantity must be at least 1")
+            @jakarta.validation.constraints.Max(value = 100, message = "Quantity cannot exceed 100")
             @RequestParam Integer quantity) {
         try {
             CartItem item = cartService.updateCartItemQuantity(userEmail, productId, quantity);

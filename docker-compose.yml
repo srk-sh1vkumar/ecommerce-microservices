@@ -10,7 +10,7 @@ services:
       - "27017:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: YOUR_SECURE_PASSWORD
+      MONGO_INITDB_ROOT_PASSWORD: password123
       MONGO_INITDB_DATABASE: ecommerce
     volumes:
       - mongodb_data:/data/db
@@ -43,7 +43,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
       - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
@@ -66,7 +66,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
       - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
@@ -89,7 +89,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
       - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
@@ -113,7 +113,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
       - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
       - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
@@ -163,7 +163,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
       - APPDYNAMICS_CONTROLLER_HOST_NAME=${APPDYNAMICS_CONTROLLER_HOST_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_NAME=${APPDYNAMICS_AGENT_ACCOUNT_NAME}
       - APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY=${APPDYNAMICS_AGENT_ACCOUNT_ACCESS_KEY}
@@ -256,7 +256,7 @@ services:
     image: grafana/grafana:10.2.2
     container_name: grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=YOUR_ADMIN_PASSWORD
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml

@@ -11,14 +11,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin(origins = "*")
 public class OrderController {
     
     @Autowired
     private OrderService orderService;
     
     @PostMapping("/checkout")
-    public ResponseEntity<Order> checkout(@RequestBody CheckoutRequest request) {
+    public ResponseEntity<Order> checkout(@jakarta.validation.Valid @RequestBody CheckoutRequest request) {
         try {
             Order order = orderService.checkout(request);
             return ResponseEntity.ok(order);

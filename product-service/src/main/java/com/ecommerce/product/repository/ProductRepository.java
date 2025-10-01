@@ -10,8 +10,13 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends MongoRepository<Product, String> {
     List<Product> findByCategory(String category);
-    List<Product> findByNameContainingIgnoreCase(String name);
-    Page<Product> findAll(Pageable pageable);
     Page<Product> findByCategory(String category, Pageable pageable);
+
+    List<Product> findByNameContainingIgnoreCase(String name);
+    Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
     List<Product> findByStockQuantityGreaterThan(Integer quantity);
+    Page<Product> findByStockQuantityGreaterThan(Integer quantity, Pageable pageable);
+
+    Page<Product> findAll(Pageable pageable);
 }

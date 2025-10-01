@@ -7,7 +7,7 @@ spring:
   
   data:
     mongodb:
-      uri: mongodb://admin:YOUR_MONGODB_PASSWORD@mongodb:27017/ecommerce?authSource=admin
+      uri: mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
       database: ecommerce
   
   profiles:

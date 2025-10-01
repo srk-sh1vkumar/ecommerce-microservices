@@ -76,9 +76,17 @@ public class ProductService {
     public List<Product> searchProducts(String name) {
         return productRepository.findByNameContainingIgnoreCase(name);
     }
-    
+
+    public Page<Product> searchProductsPaged(String name, Pageable pageable) {
+        return productRepository.findByNameContainingIgnoreCase(name, pageable);
+    }
+
     public List<Product> getAvailableProducts() {
         return productRepository.findByStockQuantityGreaterThan(0);
+    }
+
+    public Page<Product> getAvailableProductsPaged(Pageable pageable) {
+        return productRepository.findByStockQuantityGreaterThan(0, pageable);
     }
     
     public Product createProduct(Product product) {

@@ -82,6 +82,26 @@ public class ErrorResponse {
     }
 
     /**
+     * Simple constructor for message and error code.
+     */
+    public ErrorResponse(String message, String errorCode, String path, LocalDateTime timestamp) {
+        this();
+        this.message = message;
+        this.errorCode = errorCode;
+        this.path = path;
+        this.timestamp = timestamp;
+    }
+
+    /**
+     * Constructor with validation errors.
+     */
+    public ErrorResponse(String message, String errorCode, Map<String, String> validationErrors,
+                        String path, LocalDateTime timestamp) {
+        this(message, errorCode, path, timestamp);
+        this.validationErrors = validationErrors;
+    }
+
+    /**
      * Builder for fluent error response creation.
      */
     public static Builder builder() {

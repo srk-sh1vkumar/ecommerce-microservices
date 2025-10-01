@@ -14,7 +14,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = "*")
 public class ProductController {
     
     @Autowired
@@ -37,41 +36,45 @@ public class ProductController {
     }
     
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable String category) {
-        List<Product> products = productService.getProductsByCategory(category);
-        return ResponseEntity.ok(products);
-    }
-    
-    @GetMapping("/category/{category}/paged")
-    public ResponseEntity<Page<Product>> getProductsByCategoryPaged(
+    public ResponseEntity<Page<Product>> getProductsByCategory(
             @PathVariable String category,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
         Page<Product> products = productService.getProductsByCategoryPaged(category, pageable);
         return ResponseEntity.ok(products);
     }
-    
+
     @GetMapping("/search")
-    public ResponseEntity<List<Product>> searchProducts(@RequestParam String name) {
-        List<Product> products = productService.searchProducts(name);
+    public ResponseEntity<Page<Product>> searchProducts(
+            @RequestParam String name,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
+        Page<Product> products = productService.searchProductsPaged(name, pageable);
         return ResponseEntity.ok(products);
     }
-    
+
     @GetMapping("/available")
-    public ResponseEntity<List<Product>> getAvailableProducts() {
-        List<Product> products = productService.getAvailableProducts();
+    public ResponseEntity<Page<Product>> getAvailableProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
+        Page<Product> products = productService.getAvailableProductsPaged(pageable);
         return ResponseEntity.ok(products);
     }
     
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+    public ResponseEntity<Product> createProduct(@jakarta.validation.Valid @RequestBody Product product) {
         Product savedProduct = productService.createProduct(product);
         return ResponseEntity.ok(savedProduct);
     }
-    
+
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable String id, @RequestBody Product product) {
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable String id,
+            @jakarta.validation.Valid @RequestBody Product product) {
         try {
             Product updatedProduct = productService.updateProduct(id, product);
             return ResponseEntity.ok(updatedProduct);

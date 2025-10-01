@@ -3,6 +3,8 @@ package com.ecommerce.user.entity;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import com.ecommerce.common.constants.SecurityConstants;
 
 import jakarta.validation.constraints.Email;
@@ -16,7 +18,7 @@ import java.util.Objects;
  * User entity representing a registered user in the e-commerce system.
  * This class encapsulates all user-related information including authentication
  * credentials, personal details, and system metadata.
- * 
+ *
  * Key Features:
  * - MongoDB document mapping with optimized indexes
  * - Input validation using Bean Validation annotations
@@ -24,23 +26,26 @@ import java.util.Objects;
  * - Role-based access control support
  * - Audit trail with creation timestamp
  * - Email uniqueness constraint for authentication
- * 
+ *
  * Security Considerations:
  * - Email is indexed and unique for fast authentication lookups
  * - Password should be hashed before storage (handled in service layer)
  * - Role field controls access permissions across the system
  * - Created timestamp helps with audit and compliance requirements
- * 
+ *
  * Database Schema:
  * - Collection: "users"
- * - Indexes: email (unique), createdAt
+ * - Indexes: email (unique), role, createdAt, email+role composite
  * - Document structure follows MongoDB best practices
- * 
+ *
  * @author Ecommerce Development Team
  * @version 1.0
  * @since 2024-01-01
  */
 @Document(collection = "users")
+@CompoundIndexes({
+    @CompoundIndex(name = "email_role_idx", def = "{'email': 1, 'role': 1}")
+})
 public class User {
     
     /**
@@ -94,13 +99,15 @@ public class User {
      * Can be "ADMIN" for administrative privileges.
      */
     @NotBlank(message = "Role is required")
+    @Indexed
     private String role = SecurityConstants.DEFAULT_USER_ROLE;
-    
+
     /**
      * Timestamp when the user account was created.
      * Used for audit trails, analytics, and compliance.
      * Automatically set to current time on object creation.
      */
+    @Indexed
     private LocalDateTime createdAt = LocalDateTime.now();
     
     /**
