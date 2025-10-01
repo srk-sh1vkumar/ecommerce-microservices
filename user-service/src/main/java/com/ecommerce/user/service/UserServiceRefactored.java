@@ -95,8 +95,8 @@ public class UserServiceRefactored {
             );
         }
 
-        // Generate token
-        String token = jwtUtil.generateToken(user.getEmail());
+        // Generate token with role
+        String token = jwtUtil.generateTokenWithRole(user.getEmail(), user.getRole());
 
         logger.info("Successful login for user: {}", user.getEmail());
 

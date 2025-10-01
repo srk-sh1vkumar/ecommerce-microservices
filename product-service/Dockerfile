@@ -30,7 +30,7 @@ RUN mkdir -p /app/logs && \
 USER appuser
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=5 \
   CMD curl -f http://localhost:8082/actuator/health || exit 1
 
 # Environment variables for AppDynamics (defaults, can be overridden)

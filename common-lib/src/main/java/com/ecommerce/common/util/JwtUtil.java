@@ -64,6 +64,19 @@ public class JwtUtil {
     }
 
     /**
+     * Generates a JWT token with role claim.
+     *
+     * @param email User email
+     * @param role User role
+     * @return JWT token string
+     */
+    public String generateTokenWithRole(String email, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+        return generateToken(email, claims);
+    }
+
+    /**
      * Generates a JWT token with custom claims.
      *
      * @param email User email
@@ -98,6 +111,22 @@ public class JwtUtil {
         } catch (Exception e) {
             logger.error("Failed to extract email from token", e);
             throw ServiceException.unauthorized(SecurityConstants.INVALID_TOKEN);
+        }
+    }
+
+    /**
+     * Extracts role from JWT token.
+     *
+     * @param token JWT token
+     * @return User role or null if not present
+     */
+    public String getRoleFromToken(String token) {
+        try {
+            Claims claims = parseToken(token);
+            return claims.get("role", String.class);
+        } catch (Exception e) {
+            logger.debug("Failed to extract role from token: {}", e.getMessage());
+            return null;
         }
     }
 

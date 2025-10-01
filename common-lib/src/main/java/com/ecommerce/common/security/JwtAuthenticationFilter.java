@@ -56,18 +56,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtUtil.getEmailFromToken(token);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // Create authentication token with user details
+                    // Extract role from token (if present) or use default
+                    List<SimpleGrantedAuthority> authorities = getAuthorities(token);
+
+                    // Create authentication token with user details and roles
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     email,
                                     null,
-                                    getAuthorities()
+                                    authorities
                             );
 
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    logger.debug("JWT authentication successful for user: {}", email);
+                    logger.debug("JWT authentication successful for user: {} with roles: {}", email, authorities);
                 }
             }
         } catch (Exception e) {
@@ -94,12 +97,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Gets default authorities for authenticated users.
-     * Override this method to customize role extraction from JWT.
+     * Extracts authorities (roles) from JWT token.
+     * Attempts to extract role claim from token, falls back to default USER role.
      *
+     * @param token JWT token
      * @return List of authorities
      */
-    protected List<SimpleGrantedAuthority> getAuthorities() {
+    protected List<SimpleGrantedAuthority> getAuthorities(String token) {
+        try {
+            String role = jwtUtil.getRoleFromToken(token);
+            if (role != null && !role.isEmpty()) {
+                // Ensure role has ROLE_ prefix for Spring Security
+                String fullRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                logger.debug("Extracted role from token: {}", fullRole);
+                return Collections.singletonList(new SimpleGrantedAuthority(fullRole));
+            }
+        } catch (Exception e) {
+            logger.debug("Could not extract role from token, using default: {}", e.getMessage());
+        }
+
         // Default role for authenticated users
         return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
