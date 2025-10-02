@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Order Has Shipped</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: #2196F3;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .tracking-info {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📦 Your Order Has Shipped!</h1>
+    </div>
+    <div class="content">
+        <p>Hello <strong th:text="${userName}">User</strong>,</p>
+
+        <p>Good news! Your order <strong th:text="${orderId}">ORD-123456</strong> has been shipped and is on its way to you.</p>
+
+        <div class="tracking-info">
+            <h3>Tracking Information</h3>
+            <p><strong>Carrier:</strong> <span th:text="${carrier}">FedEx</span></p>
+            <p><strong>Tracking Number:</strong> <span th:text="${trackingNumber}">1234567890</span></p>
+        </div>
+
+        <a href="#" class="button">Track Your Package</a>
+
+        <p>You can use this tracking number to monitor the delivery status of your package.</p>
+
+        <p>If you have any questions or concerns, please don't hesitate to contact our customer support.</p>
+
+        <p>Thank you for your purchase!</p>
+        <p>The E-commerce Team</p>
+    </div>
+    <div class="footer">
+        <p>&copy; 2025 E-commerce Platform. All rights reserved.</p>
+        <p>This is an automated email. Please do not reply.</p>
+    </div>
+</body>
+</html>
