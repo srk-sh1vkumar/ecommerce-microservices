@@ -17,8 +17,50 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Service for managing user wishlists.
- * Allows users to save products for later purchase.
+ * Service for managing user wishlists in the e-commerce platform.
+ *
+ * <p>This service provides comprehensive wishlist functionality allowing users to save
+ * products they're interested in for later purchase. It integrates with the Product Service
+ * to fetch real-time product information and stock availability.</p>
+ *
+ * <p><b>Key Features:</b></p>
+ * <ul>
+ *   <li>Add products to wishlist with duplicate prevention</li>
+ *   <li>Remove individual items or clear entire wishlist</li>
+ *   <li>Move wishlist items to cart for purchase</li>
+ *   <li>Track stock availability for wishlist items</li>
+ *   <li>Redis caching for improved performance (30-minute TTL)</li>
+ *   <li>Automatic product details synchronization</li>
+ * </ul>
+ *
+ * <p><b>Caching Strategy:</b></p>
+ * <ul>
+ *   <li>Wishlist data cached with user email as key</li>
+ *   <li>Cache evicted on mutations (add, remove, clear)</li>
+ *   <li>Separate cache for wishlist item count</li>
+ * </ul>
+ *
+ * <p><b>Example Usage:</b></p>
+ * <pre>{@code
+ * // Add product to wishlist
+ * Wishlist wishlist = wishlistService.addToWishlist("user@example.com", "prod-123");
+ *
+ * // Check if product is in wishlist
+ * boolean inWishlist = wishlistService.isInWishlist("user@example.com", "prod-123");
+ *
+ * // Remove from wishlist
+ * wishlistService.removeFromWishlist("user@example.com", "prod-123");
+ *
+ * // Move all to cart
+ * List<String> productIds = wishlistService.moveToCart("user@example.com");
+ * }</pre>
+ *
+ * @author E-commerce Development Team
+ * @version 1.0
+ * @since 1.0
+ * @see Wishlist
+ * @see WishlistItem
+ * @see ProductServiceClient
  */
 @Service
 public class WishlistService {
@@ -32,10 +74,16 @@ public class WishlistService {
     private ProductServiceClient productServiceClient;
 
     /**
-     * Get user's wishlist with cached results.
+     * Retrieves the user's wishlist with caching support.
      *
-     * @param userEmail User's email
-     * @return User's wishlist
+     * <p>This method fetches the wishlist for a given user email. If the wishlist
+     * doesn't exist, a new empty wishlist is created and returned. Results are
+     * cached in Redis with a 30-minute TTL to improve performance.</p>
+     *
+     * @param userEmail the email address of the user, must not be null or empty
+     * @return the user's {@link Wishlist}, never null (creates new if not found)
+     * @see #addToWishlist(String, String)
+     * @see #clearWishlist(String)
      */
     @Cacheable(value = "wishlist", key = "#userEmail")
     public Wishlist getWishlist(String userEmail) {
@@ -45,11 +93,28 @@ public class WishlistService {
     }
 
     /**
-     * Add a product to user's wishlist.
+     * Adds a product to the user's wishlist.
      *
-     * @param userEmail User's email
-     * @param productId Product ID to add
-     * @return Updated wishlist
+     * <p>This method fetches product details from the Product Service and creates
+     * a wishlist item. If the product is already in the wishlist, a RuntimeException
+     * is thrown. The cache is evicted after successful addition.</p>
+     *
+     * <p><b>Process:</b></p>
+     * <ol>
+     *   <li>Fetch product details via ProductServiceClient</li>
+     *   <li>Retrieve or create user's wishlist</li>
+     *   <li>Check for duplicate products</li>
+     *   <li>Create WishlistItem with product details</li>
+     *   <li>Save and return updated wishlist</li>
+     * </ol>
+     *
+     * @param userEmail the email address of the user, must not be null
+     * @param productId the unique identifier of the product to add, must not be null
+     * @return the updated {@link Wishlist} containing the new item
+     * @throws RuntimeException if the product is already in the wishlist
+     * @throws RuntimeException if the product cannot be found in Product Service
+     * @see #removeFromWishlist(String, String)
+     * @see #isInWishlist(String, String)
      */
     @CacheEvict(value = "wishlist", key = "#userEmail")
     @Transactional

@@ -8,11 +8,46 @@ import java.math.BigDecimal;
 import java.util.regex.Pattern;
 
 /**
- * Utility class for common validation operations across microservices.
- * Provides reusable validation logic with consistent error handling.
+ * Comprehensive validation utility class for e-commerce microservices.
+ *
+ * <p>This utility class provides centralized, reusable validation methods used across
+ * all microservices in the e-commerce platform. It ensures consistent validation logic
+ * and error handling throughout the system.</p>
+ *
+ * <p><b>Validation Categories:</b></p>
+ * <ul>
+ *   <li><b>String Validation:</b> Not blank, min/max length checks</li>
+ *   <li><b>Email Validation:</b> Format validation with regex pattern</li>
+ *   <li><b>Password Validation:</b> Strength requirements (length, complexity)</li>
+ *   <li><b>Numeric Validation:</b> Positive values, price validation</li>
+ *   <li><b>ID Validation:</b> Non-null, non-empty resource identifiers</li>
+ *   <li><b>Stock Validation:</b> Availability checks</li>
+ * </ul>
+ *
+ * <p><b>Error Handling:</b></p>
+ * <p>All validation methods throw {@link ServiceException} with appropriate HTTP status
+ * codes and standardized error codes for consistent API responses.</p>
+ *
+ * <p><b>Usage Example:</b></p>
+ * <pre>{@code
+ * // Validate email
+ * ValidationUtils.validateEmail("user@example.com");
+ *
+ * // Validate password strength
+ * ValidationUtils.validatePassword("SecureP@ss123");
+ *
+ * // Validate positive integer
+ * ValidationUtils.validatePositive(quantity, "Quantity");
+ *
+ * // Validate price
+ * ValidationUtils.validatePrice(new BigDecimal("29.99"));
+ * }</pre>
  *
  * @author E-commerce Development Team
  * @version 2.0
+ * @since 1.0
+ * @see ServiceException
+ * @see ErrorCodes
  */
 public final class ValidationUtils {
 
@@ -29,11 +64,16 @@ public final class ValidationUtils {
     );
 
     /**
-     * Validates that a string is not null or empty.
+     * Validates that a string is not null, empty, or whitespace-only.
      *
-     * @param value The string to validate
-     * @param fieldName The name of the field for error messages
-     * @throws ServiceException if validation fails
+     * <p>This method uses Spring's {@code StringUtils.hasText()} to check if the
+     * value contains actual text content.</p>
+     *
+     * @param value the string value to validate
+     * @param fieldName the name of the field being validated (used in error message)
+     * @throws ServiceException with HTTP 400 Bad Request if the value is blank
+     * @see #validateEmail(String)
+     * @see #validateId(String, String)
      */
     public static void validateNotBlank(String value, String fieldName) {
         if (!StringUtils.hasText(value)) {
@@ -45,10 +85,20 @@ public final class ValidationUtils {
     }
 
     /**
-     * Validates email format.
+     * Validates email address format using regex pattern.
      *
-     * @param email The email to validate
-     * @throws ServiceException if email is invalid
+     * <p>The email must match the pattern: {@code ^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$}</p>
+     *
+     * <p><b>Valid Examples:</b></p>
+     * <ul>
+     *   <li>user@example.com</li>
+     *   <li>john.doe+tag@company.co.uk</li>
+     *   <li>test_123@test-domain.com</li>
+     * </ul>
+     *
+     * @param email the email address to validate, must not be null or empty
+     * @throws ServiceException with HTTP 400 Bad Request if email format is invalid
+     * @see #normalizeEmail(String)
      */
     public static void validateEmail(String email) {
         validateNotBlank(email, "Email");
@@ -62,10 +112,25 @@ public final class ValidationUtils {
     }
 
     /**
-     * Validates password strength.
+     * Validates password strength according to security requirements.
      *
-     * @param password The password to validate
-     * @throws ServiceException if password doesn't meet requirements
+     * <p><b>Password Requirements:</b></p>
+     * <ul>
+     *   <li>Minimum 8 characters, maximum 100 characters</li>
+     *   <li>At least one lowercase letter (a-z)</li>
+     *   <li>At least one uppercase letter (A-Z)</li>
+     *   <li>At least one digit (0-9)</li>
+     * </ul>
+     *
+     * <p><b>Valid Examples:</b></p>
+     * <ul>
+     *   <li>SecurePass123</li>
+     *   <li>MyP@ssw0rd!</li>
+     *   <li>Admin2024Test</li>
+     * </ul>
+     *
+     * @param password the password to validate, must not be null or empty
+     * @throws ServiceException with HTTP 400 Bad Request if password doesn't meet requirements
      */
     public static void validatePassword(String password) {
         validateNotBlank(password, "Password");
