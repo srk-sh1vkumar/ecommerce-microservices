@@ -2,35 +2,37 @@ package com.ecommerce.user.mapper;
 
 import com.ecommerce.user.dto.UserResponseDTO;
 import com.ecommerce.user.entity.User;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
+import org.springframework.stereotype.Component;
 
 /**
- * MapStruct mapper for User entity to DTO conversions.
- * Automatically generates implementation at compile time.
+ * Mapper for User entity to DTO conversions.
  */
-@Mapper(componentModel = "spring")
-public interface UserMapper {
-
-    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
+@Component
+public class UserMapper {
 
     /**
      * Convert User entity to UserResponseDTO (excludes password).
      */
-    @Mapping(target = "id", source = "id")
-    @Mapping(target = "email", source = "email")
-    @Mapping(target = "firstName", source = "firstName")
-    @Mapping(target = "lastName", source = "lastName")
-    @Mapping(target = "role", source = "role")
-    @Mapping(target = "createdAt", source = "createdAt")
-    UserResponseDTO toResponseDTO(User user);
+    public UserResponseDTO toResponseDTO(User user) {
+        if (user == null) {
+            return null;
+        }
+
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setId(user.getId());
+        dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
+        dto.setRole(user.getRole());
+        dto.setCreatedAt(user.getCreatedAt());
+        return dto;
+    }
 
     /**
      * Convert User entity to UserResponseDTO without password.
      * Alias method for clarity.
      */
-    default UserResponseDTO toDTO(User user) {
+    public UserResponseDTO toDTO(User user) {
         return toResponseDTO(user);
     }
 }
