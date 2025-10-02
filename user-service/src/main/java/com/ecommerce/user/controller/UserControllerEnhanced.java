@@ -222,4 +222,32 @@ public class UserControllerEnhanced {
                 exists ? "Email already taken" : "Email available"
         ));
     }
+
+    @Operation(
+            summary = "Request Password Reset",
+            description = "Initiates password reset process by sending a reset email to the user"
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Password reset email sent successfully"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<ApiResponse<Void>> requestPasswordReset(
+            @Parameter(description = "Email address of user requesting password reset", required = true)
+            @RequestParam String email) {
+
+        logger.info("Password reset request for email: {}", email);
+
+        userService.requestPasswordReset(email);
+        return ResponseEntity.ok(ApiResponse.success(
+                "If the email exists, a password reset link has been sent"
+        ));
+    }
 }

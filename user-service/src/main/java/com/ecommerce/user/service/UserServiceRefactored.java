@@ -9,6 +9,7 @@ import com.ecommerce.user.dto.AuthResponse;
 import com.ecommerce.user.dto.LoginRequest;
 import com.ecommerce.user.dto.UserResponseDTO;
 import com.ecommerce.common.metrics.MetricsService;
+import com.ecommerce.user.client.NotificationServiceClient;
 import com.ecommerce.user.entity.User;
 import com.ecommerce.user.mapper.UserMapper;
 import com.ecommerce.user.repository.UserRepository;
@@ -16,8 +17,10 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,18 +51,24 @@ public class UserServiceRefactored {
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
     private final MetricsService metricsService;
+    private final NotificationServiceClient notificationServiceClient;
+
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
 
     @Autowired
     public UserServiceRefactored(UserRepository userRepository,
                                  PasswordEncoder passwordEncoder,
                                  JwtUtil jwtUtil,
                                  UserMapper userMapper,
-                                 MetricsService metricsService) {
+                                 MetricsService metricsService,
+                                 NotificationServiceClient notificationServiceClient) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.userMapper = userMapper;
         this.metricsService = metricsService;
+        this.notificationServiceClient = notificationServiceClient;
     }
 
     /**
@@ -153,8 +162,38 @@ public class UserServiceRefactored {
         logger.info("User successfully registered: {}", savedUser.getEmail());
         metricsService.incrementUserRegistrations();
 
+        // Send welcome email asynchronously
+        sendWelcomeEmailAsync(savedUser);
+
         // Convert to DTO (automatically excludes password)
         return userMapper.toResponseDTO(savedUser);
+    }
+
+    /**
+     * Sends a welcome email to a newly registered user asynchronously.
+     * Failures in email sending do not affect the registration process.
+     *
+     * @param user Newly registered user
+     */
+    @Async
+    protected void sendWelcomeEmailAsync(User user) {
+        try {
+            String fullName = user.getFirstName() + " " + user.getLastName();
+            String activationLink = baseUrl + "/api/users/activate?token=" +
+                                  jwtUtil.generateToken(user.getEmail());
+
+            notificationServiceClient.sendWelcomeEmail(
+                user.getEmail(),
+                fullName,
+                activationLink
+            );
+
+            logger.info("Welcome email sent successfully to: {}", user.getEmail());
+        } catch (Exception e) {
+            // Log error but don't fail registration
+            logger.error("Failed to send welcome email to: {}. Error: {}",
+                        user.getEmail(), e.getMessage());
+        }
     }
 
     /**
@@ -276,5 +315,57 @@ public class UserServiceRefactored {
         ValidationUtils.validateEmail(email);
         String normalizedEmail = ValidationUtils.normalizeEmail(email);
         return userRepository.existsByEmail(normalizedEmail);
+    }
+
+    /**
+     * Initiates password reset process by sending a reset email.
+     *
+     * @param email User's email address
+     * @throws ServiceException if user not found
+     */
+    @Transactional(readOnly = true)
+    public void requestPasswordReset(String email) {
+        logger.info("Password reset requested for email: {}", email);
+
+        ValidationUtils.validateEmail(email);
+        String normalizedEmail = ValidationUtils.normalizeEmail(email);
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> {
+                    logger.warn("Password reset requested for non-existent email: {}", normalizedEmail);
+                    return ServiceException.notFound(
+                            "User not found",
+                            ErrorCodes.USER_NOT_FOUND
+                    );
+                });
+
+        // Send password reset email asynchronously
+        sendPasswordResetEmailAsync(user);
+    }
+
+    /**
+     * Sends a password reset email asynchronously.
+     *
+     * @param user User requesting password reset
+     */
+    @Async
+    protected void sendPasswordResetEmailAsync(User user) {
+        try {
+            String fullName = user.getFirstName() + " " + user.getLastName();
+            // Generate time-limited reset token (expires in 24 hours)
+            String resetToken = jwtUtil.generateToken(user.getEmail());
+            String resetLink = baseUrl + "/api/users/reset-password?token=" + resetToken;
+
+            notificationServiceClient.sendPasswordResetEmail(
+                user.getEmail(),
+                fullName,
+                resetLink
+            );
+
+            logger.info("Password reset email sent successfully to: {}", user.getEmail());
+        } catch (Exception e) {
+            logger.error("Failed to send password reset email to: {}. Error: {}",
+                        user.getEmail(), e.getMessage());
+        }
     }
 }

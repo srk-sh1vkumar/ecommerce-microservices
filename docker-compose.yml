@@ -171,6 +171,27 @@ services:
       - ecommerce-network
     restart: on-failure
 
+  # Notification Service
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8088:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=notification-service
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=notification-service,service.version=1.0.0
+    depends_on:
+      - eureka-server
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
   # API Gateway
   api-gateway:
     build: ./api-gateway
@@ -193,6 +214,7 @@ services:
       - cart-service
       - order-service
       - wishlist-service
+      - notification-service
     networks:
       - ecommerce-network
     restart: on-failure

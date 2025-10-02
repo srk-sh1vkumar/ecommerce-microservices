@@ -8,9 +8,13 @@ import com.ecommerce.order.dto.CartItemDTO;
 import com.ecommerce.order.dto.CheckoutRequest;
 import com.ecommerce.order.client.CartServiceClient;
 import com.ecommerce.order.client.ProductServiceClient;
+import com.ecommerce.order.client.NotificationServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class OrderService {
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
 
     @Autowired
     private OrderRepository orderRepository;
@@ -33,6 +39,9 @@ public class OrderService {
 
     @Autowired
     private MetricsService metricsService;
+
+    @Autowired
+    private NotificationServiceClient notificationServiceClient;
     
     @CacheEvict(value = {"userOrders", "ordersByStatus"}, allEntries = true)
     @Transactional
@@ -100,10 +109,51 @@ public class OrderService {
         long duration = System.currentTimeMillis() - startTime;
         metricsService.recordCheckoutDuration(duration, TimeUnit.MILLISECONDS);
 
+        // Send order confirmation email asynchronously
+        sendOrderConfirmationEmailAsync(savedOrder, request.getUserEmail());
+
         return savedOrder;
         } catch (Exception e) {
             metricsService.incrementOrdersFailed();
             throw e;
+        }
+    }
+
+    /**
+     * Sends order confirmation email asynchronously.
+     * Email sending failures do not affect order processing.
+     *
+     * @param order The created order
+     * @param userEmail Customer's email address
+     */
+    @Async
+    protected void sendOrderConfirmationEmailAsync(Order order, String userEmail) {
+        try {
+            // Extract user's first name from email (or could call user-service)
+            String userName = userEmail.substring(0, userEmail.indexOf('@'));
+
+            // Format order items for email
+            StringBuilder orderItemsText = new StringBuilder();
+            for (OrderItem item : order.getOrderItems()) {
+                orderItemsText.append(String.format("%s x%d - $%s\n",
+                    item.getProductName(),
+                    item.getQuantity(),
+                    item.getProductPrice().multiply(BigDecimal.valueOf(item.getQuantity()))));
+            }
+
+            notificationServiceClient.sendOrderConfirmation(
+                userEmail,
+                userName,
+                order.getId(),
+                "$" + order.getTotalAmount().toString(),
+                orderItemsText.toString()
+            );
+
+            logger.info("Order confirmation email sent successfully for order: {}", order.getId());
+        } catch (Exception e) {
+            // Log error but don't fail order processing
+            logger.error("Failed to send order confirmation email for order: {}. Error: {}",
+                        order.getId(), e.getMessage());
         }
     }
     
