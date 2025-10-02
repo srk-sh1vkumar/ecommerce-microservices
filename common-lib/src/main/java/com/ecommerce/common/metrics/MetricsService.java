@@ -157,10 +157,10 @@ public class MetricsService {
     }
 
     /**
-     * Records a custom metric with tags.
+     * Gets the meter registry for custom metrics.
      */
-    public void recordCustomMetric(String name, String description, double value, String... tags) {
-        meterRegistry.gauge(name, meterRegistry.config().commonTags(tags), value);
+    public MeterRegistry getMeterRegistry() {
+        return meterRegistry;
     }
 
     /**
