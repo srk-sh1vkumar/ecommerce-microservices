@@ -2,6 +2,7 @@ package com.ecommerce.product.service;
 
 import com.ecommerce.common.constants.ErrorCodes;
 import com.ecommerce.common.exception.ServiceException;
+import com.ecommerce.common.metrics.MetricsService;
 import com.ecommerce.common.util.ValidationUtils;
 import com.ecommerce.product.entity.Product;
 import com.ecommerce.product.repository.ProductRepository;
@@ -44,10 +45,12 @@ public class ProductServiceRefactored {
     private static final String CIRCUIT_BREAKER_NAME = "productService";
 
     private final ProductRepository productRepository;
+    private final MetricsService metricsService;
 
     @Autowired
-    public ProductServiceRefactored(ProductRepository productRepository) {
+    public ProductServiceRefactored(ProductRepository productRepository, MetricsService metricsService) {
         this.productRepository = productRepository;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -91,11 +94,14 @@ public class ProductServiceRefactored {
 
         ValidationUtils.validateId(id, "Product");
 
-        return productRepository.findById(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> ServiceException.notFound(
                         "Product not found with ID: " + id,
                         ErrorCodes.PRODUCT_NOT_FOUND
                 ));
+
+        metricsService.incrementProductViews();
+        return product;
     }
 
     /**
@@ -146,6 +152,7 @@ public class ProductServiceRefactored {
 
         ValidationUtils.validateNotBlank(name, "Search term");
 
+        metricsService.incrementProductSearches();
         return productRepository.findByNameContainingIgnoreCase(name);
     }
 
@@ -195,6 +202,7 @@ public class ProductServiceRefactored {
         Product savedProduct = productRepository.save(product);
         logger.info("Product created successfully with ID: {}", savedProduct.getId());
 
+        metricsService.incrementProductCreations();
         return savedProduct;
     }
 

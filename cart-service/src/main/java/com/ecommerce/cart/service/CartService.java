@@ -5,6 +5,7 @@ import com.ecommerce.cart.repository.CartItemRepository;
 import com.ecommerce.cart.dto.ProductDTO;
 import com.ecommerce.cart.dto.AddToCartRequest;
 import com.ecommerce.cart.client.ProductServiceClient;
+import com.ecommerce.common.metrics.MetricsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -17,12 +18,15 @@ import java.util.Optional;
 
 @Service
 public class CartService {
-    
+
     @Autowired
     private CartItemRepository cartItemRepository;
-    
+
     @Autowired
     private ProductServiceClient productServiceClient;
+
+    @Autowired
+    private MetricsService metricsService;
     
     @Cacheable(value = "userCartItems", key = "#userEmail")
     public List<CartItem> getCartItems(String userEmail) {
@@ -47,6 +51,7 @@ public class CartService {
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
             item.setQuantity(item.getQuantity() + request.getQuantity());
+            metricsService.incrementItemsAddedToCart();
             return cartItemRepository.save(item);
         } else {
             CartItem newItem = new CartItem(
@@ -56,6 +61,7 @@ public class CartService {
                     product.getPrice(),
                     request.getQuantity()
             );
+            metricsService.incrementItemsAddedToCart();
             return cartItemRepository.save(newItem);
         }
     }
@@ -78,12 +84,14 @@ public class CartService {
     @Transactional
     public void removeFromCart(String userEmail, String productId) {
         cartItemRepository.deleteByUserEmailAndProductId(userEmail, productId);
+        metricsService.incrementItemsRemovedFromCart();
     }
     
     @CacheEvict(value = {"userCartItems", "cartItemCount"}, key = "#userEmail")
     @Transactional
     public void clearCart(String userEmail) {
         cartItemRepository.deleteByUserEmail(userEmail);
+        metricsService.incrementCartsCleared();
     }
     
     public BigDecimal getCartTotal(String userEmail) {

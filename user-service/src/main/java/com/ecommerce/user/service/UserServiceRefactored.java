@@ -8,6 +8,7 @@ import com.ecommerce.common.util.ValidationUtils;
 import com.ecommerce.user.dto.AuthResponse;
 import com.ecommerce.user.dto.LoginRequest;
 import com.ecommerce.user.dto.UserResponseDTO;
+import com.ecommerce.common.metrics.MetricsService;
 import com.ecommerce.user.entity.User;
 import com.ecommerce.user.mapper.UserMapper;
 import com.ecommerce.user.repository.UserRepository;
@@ -46,16 +47,19 @@ public class UserServiceRefactored {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final UserMapper userMapper;
+    private final MetricsService metricsService;
 
     @Autowired
     public UserServiceRefactored(UserRepository userRepository,
                                  PasswordEncoder passwordEncoder,
                                  JwtUtil jwtUtil,
-                                 UserMapper userMapper) {
+                                 UserMapper userMapper,
+                                 MetricsService metricsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.userMapper = userMapper;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -89,6 +93,7 @@ public class UserServiceRefactored {
         // Verify password
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             logger.warn("Invalid password attempt for email: {}", normalizedEmail);
+            metricsService.incrementFailedLogins();
             throw ServiceException.unauthorized(
                     SecurityConstants.INVALID_CREDENTIALS,
                     ErrorCodes.INVALID_CREDENTIALS
@@ -99,6 +104,7 @@ public class UserServiceRefactored {
         String token = jwtUtil.generateTokenWithRole(user.getEmail(), user.getRole());
 
         logger.info("Successful login for user: {}", user.getEmail());
+        metricsService.incrementUserLogins();
 
         return new AuthResponse(token, user.getEmail(), user.getFirstName(), user.getLastName());
     }
@@ -145,6 +151,7 @@ public class UserServiceRefactored {
         User savedUser = userRepository.save(user);
 
         logger.info("User successfully registered: {}", savedUser.getEmail());
+        metricsService.incrementUserRegistrations();
 
         // Convert to DTO (automatically excludes password)
         return userMapper.toResponseDTO(savedUser);

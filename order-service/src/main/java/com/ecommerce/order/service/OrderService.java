@@ -1,5 +1,6 @@
 package com.ecommerce.order.service;
 
+import com.ecommerce.common.metrics.MetricsService;
 import com.ecommerce.order.entity.Order;
 import com.ecommerce.order.entity.OrderItem;
 import com.ecommerce.order.repository.OrderRepository;
@@ -16,27 +17,35 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class OrderService {
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private CartServiceClient cartServiceClient;
-    
+
     @Autowired
     private ProductServiceClient productServiceClient;
+
+    @Autowired
+    private MetricsService metricsService;
     
     @CacheEvict(value = {"userOrders", "ordersByStatus"}, allEntries = true)
     @Transactional
     public Order checkout(CheckoutRequest request) {
-        List<CartItemDTO> cartItems = cartServiceClient.getCartItems(request.getUserEmail());
+        long startTime = System.currentTimeMillis();
 
-        if (cartItems.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
-        }
+        try {
+            List<CartItemDTO> cartItems = cartServiceClient.getCartItems(request.getUserEmail());
+
+            if (cartItems.isEmpty()) {
+                metricsService.incrementOrdersFailed();
+                throw new RuntimeException("Cart is empty");
+            }
 
         // Bulk update stock - reduces N+1 query problem
         List<com.ecommerce.order.dto.StockUpdateRequest> stockUpdates = cartItems.stream()
@@ -58,6 +67,7 @@ public class OrderService {
                     })
                     .collect(java.util.stream.Collectors.toList());
 
+            metricsService.incrementOrdersFailed();
             throw new RuntimeException("Insufficient stock for products: " + String.join(", ", failedProducts));
         }
 
@@ -79,10 +89,22 @@ public class OrderService {
             orderItems.add(orderItem);
         }
         order.setOrderItems(orderItems);
-        
+
+
         cartServiceClient.clearCart(request.getUserEmail());
-        
-        return orderRepository.save(order);
+
+        Order savedOrder = orderRepository.save(order);
+
+        // Record successful checkout
+        metricsService.incrementOrdersPlaced();
+        long duration = System.currentTimeMillis() - startTime;
+        metricsService.recordCheckoutDuration(duration, TimeUnit.MILLISECONDS);
+
+        return savedOrder;
+        } catch (Exception e) {
+            metricsService.incrementOrdersFailed();
+            throw e;
+        }
     }
     
     @Cacheable(value = "userOrders", key = "#userEmail")
