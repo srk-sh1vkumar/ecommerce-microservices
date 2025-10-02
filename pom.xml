@@ -27,6 +27,7 @@
         <module>product-service</module>
         <module>cart-service</module>
         <module>order-service</module>
+        <module>wishlist-service</module>
         <module>api-gateway</module>
         <module>eureka-server</module>
     </modules>

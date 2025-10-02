@@ -147,6 +147,30 @@ services:
       - ecommerce-network
     restart: on-failure
 
+  # Wishlist Service
+  wishlist-service:
+    build: ./wishlist-service
+    container_name: wishlist-service
+    ports:
+      - "8086:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=wishlist-service
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=wishlist-service,service.version=1.0.0
+    depends_on:
+      - mongodb
+      - redis
+      - eureka-server
+      - product-service
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
   # API Gateway
   api-gateway:
     build: ./api-gateway
@@ -168,6 +192,7 @@ services:
       - product-service
       - cart-service
       - order-service
+      - wishlist-service
     networks:
       - ecommerce-network
     restart: on-failure

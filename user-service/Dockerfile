@@ -1,5 +1,5 @@
 # Multi-stage build with official AppDynamics Java Agent
-FROM appdynamics/java-agent:25.7.0.37201 AS appdynamics-agent
+FROM appdynamics/java-agent:25.8.0.37285 AS appdynamics-agent
 
 FROM eclipse-temurin:17-jre
 
