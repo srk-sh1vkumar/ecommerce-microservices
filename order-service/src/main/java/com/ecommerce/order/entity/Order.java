@@ -30,6 +30,12 @@ public class Order {
     @Indexed
     private LocalDateTime orderDate = LocalDateTime.now();
     private List<OrderItem> orderItems;
+
+    // Payment information
+    @Indexed
+    private String paymentIntentId;
+    private String paymentStatus;
+    private LocalDateTime paymentDate;
     
     public Order() {}
     
@@ -59,6 +65,15 @@ public class Order {
     
     public List<OrderItem> getOrderItems() { return orderItems; }
     public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }
+
+    public String getPaymentIntentId() { return paymentIntentId; }
+    public void setPaymentIntentId(String paymentIntentId) { this.paymentIntentId = paymentIntentId; }
+
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+
+    public LocalDateTime getPaymentDate() { return paymentDate; }
+    public void setPaymentDate(LocalDateTime paymentDate) { this.paymentDate = paymentDate; }
 }
 
 enum OrderStatus {

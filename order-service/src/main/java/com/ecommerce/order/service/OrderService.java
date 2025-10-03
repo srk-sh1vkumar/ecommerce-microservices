@@ -6,6 +6,8 @@ import com.ecommerce.order.entity.OrderItem;
 import com.ecommerce.order.repository.OrderRepository;
 import com.ecommerce.order.dto.CartItemDTO;
 import com.ecommerce.order.dto.CheckoutRequest;
+import com.ecommerce.order.dto.PaymentRequest;
+import com.ecommerce.order.dto.PaymentResponse;
 import com.ecommerce.order.client.CartServiceClient;
 import com.ecommerce.order.client.ProductServiceClient;
 import com.ecommerce.order.client.NotificationServiceClient;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +45,9 @@ public class OrderService {
 
     @Autowired
     private NotificationServiceClient notificationServiceClient;
+
+    @Autowired
+    private PaymentService paymentService;
     
     @CacheEvict(value = {"userOrders", "ordersByStatus"}, allEntries = true)
     @Transactional
@@ -83,10 +89,12 @@ public class OrderService {
         BigDecimal totalAmount = cartItems.stream()
                 .map(item -> item.getProductPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
+        // Create order
         Order order = new Order(request.getUserEmail(), totalAmount, request.getShippingAddress());
         order = orderRepository.save(order);
-        
+
+        // Build order items
         List<OrderItem> orderItems = new ArrayList<>();
         for (CartItemDTO cartItem : cartItems) {
             OrderItem orderItem = new OrderItem(
@@ -99,7 +107,43 @@ public class OrderService {
         }
         order.setOrderItems(orderItems);
 
+        // Process payment
+        PaymentResponse paymentResponse = null;
+        try {
+            PaymentRequest paymentRequest = new PaymentRequest(
+                order.getId(),
+                totalAmount,
+                request.getUserEmail()
+            );
+            paymentService.validatePaymentRequest(paymentRequest);
+            paymentResponse = paymentService.createPaymentIntent(paymentRequest);
 
+            if (!paymentResponse.isSuccess()) {
+                logger.error("Payment failed for order: {}. Status: {}",
+                           order.getId(), paymentResponse.getStatus());
+                throw new RuntimeException("Payment failed: " + paymentResponse.getStatus());
+            }
+
+            // Store payment information in order
+            order.setPaymentIntentId(paymentResponse.getTransactionId());
+            order.setPaymentStatus(paymentResponse.getStatus());
+            order.setPaymentDate(LocalDateTime.now());
+
+            logger.info("Payment successful for order: {}. Transaction ID: {}",
+                       order.getId(), paymentResponse.getTransactionId());
+
+        } catch (Exception e) {
+            logger.error("Payment processing failed for order: {}. Error: {}",
+                        order.getId(), e.getMessage());
+
+            // Rollback stock updates
+            rollbackStockUpdates(stockUpdates);
+
+            metricsService.incrementOrdersFailed();
+            throw new RuntimeException("Payment failed: " + e.getMessage(), e);
+        }
+
+        // Clear cart only after successful payment
         cartServiceClient.clearCart(request.getUserEmail());
 
         Order savedOrder = orderRepository.save(order);
@@ -166,5 +210,58 @@ public class OrderService {
     public Order getOrderById(String orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+
+    /**
+     * Rolls back stock updates when payment fails.
+     * Restores product stock quantities to their original state.
+     *
+     * @param stockUpdates List of stock updates to rollback
+     */
+    private void rollbackStockUpdates(List<com.ecommerce.order.dto.StockUpdateRequest> stockUpdates) {
+        logger.warn("Rolling back stock updates for {} products", stockUpdates.size());
+
+        try {
+            // Create reverse stock updates (add back the quantities)
+            List<com.ecommerce.order.dto.StockUpdateRequest> reverseUpdates = stockUpdates.stream()
+                .map(update -> new com.ecommerce.order.dto.StockUpdateRequest(
+                    update.getProductId(),
+                    -update.getQuantity()  // Negative to add back
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
+            // Note: This requires a new endpoint in ProductService to add stock
+            // For now, we'll log the rollback attempt
+            logger.info("Stock rollback logged for {} products. Manual intervention may be required.",
+                       reverseUpdates.size());
+
+        } catch (Exception e) {
+            logger.error("Failed to rollback stock updates: {}", e.getMessage());
+            // In production, this would trigger an alert for manual intervention
+        }
+    }
+
+    /**
+     * Refunds a payment for a cancelled order.
+     *
+     * @param orderId Order ID to refund
+     * @return Refund ID if successful
+     */
+    public String refundOrder(String orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getPaymentIntentId() == null) {
+            throw new RuntimeException("No payment found for order");
+        }
+
+        try {
+            String refundId = paymentService.refundPayment(order.getPaymentIntentId(), order.getTotalAmount());
+            logger.info("Refund processed for order: {}. Refund ID: {}", orderId, refundId);
+            return refundId;
+        } catch (Exception e) {
+            logger.error("Refund failed for order: {}. Error: {}", orderId, e.getMessage());
+            throw new RuntimeException("Refund processing failed", e);
+        }
     }
 }

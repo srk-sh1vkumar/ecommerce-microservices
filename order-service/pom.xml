@@ -56,6 +56,13 @@
             <version>2.2.0</version>
         </dependency>
 
+        <!-- Stripe Payment Processing -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>24.3.0</version>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

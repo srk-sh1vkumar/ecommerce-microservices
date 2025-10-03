@@ -29,6 +29,12 @@ management:
     health:
       show-details: always
 
+# Stripe Payment Configuration
+stripe:
+  api:
+    secret-key: ${STRIPE_SECRET_KEY:sk_test_your_test_key_here}
+  currency: usd
+
 ---
 spring:
   config:
