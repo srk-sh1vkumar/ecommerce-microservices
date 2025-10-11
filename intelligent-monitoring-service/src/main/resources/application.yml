@@ -4,14 +4,19 @@ server:
 spring:
   application:
     name: intelligent-monitoring-service
-  
+
   data:
     mongodb:
       uri: mongodb://admin:password123@mongodb:27017/ecommerce?authSource=admin
       database: ecommerce
-  
+
   profiles:
     active: docker
+
+  security:
+    user:
+      name: admin
+      password: admin123
 
 # Eureka Configuration
 eureka:
@@ -38,6 +43,8 @@ management:
     export:
       prometheus:
         enabled: true
+  security:
+    enabled: false
 
 # AppDynamics Integration
 appdynamics:

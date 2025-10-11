@@ -93,7 +93,7 @@ public class HumanReviewService {
         auditService.logEvent("code_fix_submitted_for_review", Map.of(
             "reviewId", reviewId,
             "errorSignature", errorEvent.getErrorSignature(),
-            "service", errorEvent.getService(),
+            "service", errorEvent.getServiceName(),
             "severity", review.getSeverity().toString(),
             "submittedBy", submittedBy,
             "requiresApproval", review.isRequiresApproval()
@@ -358,12 +358,12 @@ public class HumanReviewService {
         }
         
         // Services affected
-        if (errorEvent.getService() != null) {
-            if (errorEvent.getService().contains("gateway") || 
-                errorEvent.getService().contains("auth")) {
+        if (errorEvent.getServiceName() != null) {
+            if (errorEvent.getServiceName().contains("gateway") ||
+                errorEvent.getServiceName().contains("auth")) {
                 score += 3; // Critical services
-            } else if (errorEvent.getService().contains("user") || 
-                      errorEvent.getService().contains("order")) {
+            } else if (errorEvent.getServiceName().contains("user") ||
+                      errorEvent.getServiceName().contains("order")) {
                 score += 2; // Important services
             } else {
                 score += 1; // Other services
@@ -418,8 +418,8 @@ public class HumanReviewService {
         
         // Require approval for high-impact changes
         MonitoringEvent error = review.getErrorEvent();
-        if (error.getService() != null && 
-            (error.getService().contains("gateway") || error.getService().contains("auth"))) {
+        if (error.getServiceName() != null &&
+            (error.getServiceName().contains("gateway") || error.getServiceName().contains("auth"))) {
             return true;
         }
         
@@ -483,8 +483,8 @@ public class HumanReviewService {
     private AutomatedFix createPendingAutomatedFix(PendingReview review) {
         AutomatedFix fix = new AutomatedFix();
         fix.setErrorPatternId(review.getErrorEvent().getErrorSignature());
-        fix.setService(review.getErrorEvent().getService());
-        fix.setFixDescription("Pending human review: " + review.getProposedFix().getDescription());
+        fix.setServiceName(review.getErrorEvent().getServiceName());
+        fix.setDescription("Pending human review: " + review.getProposedFix().getDescription());
         fix.setStatus("PENDING_REVIEW");
         fix.setCreatedAt(LocalDateTime.now());
         fix.setReviewId(review.getReviewId());
@@ -518,7 +518,7 @@ public class HumanReviewService {
             "Please review at: /admin/code-reviews/%s",
             review.getReviewId(),
             review.getErrorEvent().getErrorSignature(),
-            review.getErrorEvent().getService(),
+            review.getErrorEvent().getServiceName(),
             review.getSeverity(),
             review.isRequiresApproval(),
             review.getSubmittedBy(),

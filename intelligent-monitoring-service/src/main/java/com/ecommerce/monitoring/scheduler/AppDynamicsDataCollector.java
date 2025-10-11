@@ -205,7 +205,7 @@ public class AppDynamicsDataCollector {
             
             // Analyze error patterns for auto-fixing
             if (!errors.isEmpty()) {
-                errorPatternService.analyzeErrors(errors);
+                errors.forEach(errorPatternService::analyzeErrorPattern);
             }
             
             long duration = System.currentTimeMillis() - startTime;
@@ -314,7 +314,7 @@ public class AppDynamicsDataCollector {
             
             // Analyze for error patterns
             if (!events.isEmpty()) {
-                errorPatternService.analyzeErrors(events);
+                events.forEach(errorPatternService::analyzeErrorPattern);
             }
             
             logger.debug("Collected {} health violations", events.size());
@@ -329,7 +329,7 @@ public class AppDynamicsDataCollector {
         
         // Analyze for error patterns
         if (!events.isEmpty()) {
-            errorPatternService.analyzeErrors(events);
+            events.forEach(errorPatternService::analyzeErrorPattern);
         }
         
         logger.debug("Collected {} health violations", events.size());

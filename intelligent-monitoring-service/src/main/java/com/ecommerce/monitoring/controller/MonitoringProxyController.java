@@ -11,6 +11,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URI;
@@ -54,11 +55,11 @@ public class MonitoringProxyController {
     
     public MonitoringProxyController() {
         this.restTemplate = new RestTemplate();
-        initializeServiceUrls();
     }
-    
+
+    @PostConstruct
     private void initializeServiceUrls() {
-        // Initialize service URL mappings
+        // Initialize service URL mappings after @Value injection
         serviceUrls.put("grafana", grafanaUrl);
         serviceUrls.put("prometheus", prometheusUrl);
         serviceUrls.put("alertmanager", alertmanagerUrl);
