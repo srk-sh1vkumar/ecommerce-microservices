@@ -73,7 +73,7 @@ public abstract class ContractVerifierBase {
                 120,
                 "https://example.com/images/mouse.jpg"
         );
-        when(productService.getProductsByCategory(eq("Electronics"), any()))
+        when(productService.getProductsByCategory("Electronics"))
                 .thenReturn(Arrays.asList(product1, product2));
 
         // Mock updateStock

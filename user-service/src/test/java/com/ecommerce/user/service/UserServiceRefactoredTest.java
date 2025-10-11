@@ -124,7 +124,7 @@ class UserServiceRefactoredTest {
         // Act & Assert
         assertThatThrownBy(() -> userService.login(loginRequest))
                 .isInstanceOf(ServiceException.class)
-                .hasMessageContaining("Invalid credentials");
+                .hasMessageContaining("Invalid email or password");
 
         verify(userRepository).findByEmail("test@example.com");
         verify(passwordEncoder, never()).matches(anyString(), anyString());
@@ -141,7 +141,7 @@ class UserServiceRefactoredTest {
         // Act & Assert
         assertThatThrownBy(() -> userService.login(loginRequest))
                 .isInstanceOf(ServiceException.class)
-                .hasMessageContaining("Invalid credentials");
+                .hasMessageContaining("Invalid email or password");
 
         verify(userRepository).findByEmail("test@example.com");
         verify(passwordEncoder).matches("password123", testUser.getPassword());
@@ -205,7 +205,7 @@ class UserServiceRefactoredTest {
         // Arrange
         User newUser = new User();
         newUser.setEmail("test@example.com");
-        newUser.setPassword("password123");
+        newUser.setPassword("StrongPass456!");
         newUser.setFirstName("Jane");
         newUser.setLastName("Smith");
 
@@ -227,7 +227,7 @@ class UserServiceRefactoredTest {
         // Arrange
         User newUser = new User();
         newUser.setEmail("newuser@example.com");
-        newUser.setPassword("password123");
+        newUser.setPassword("StrongPass456!");
         newUser.setFirstName("Jane");
         newUser.setLastName("Smith");
         // role is null
@@ -251,7 +251,7 @@ class UserServiceRefactoredTest {
         // Arrange
         User newUser = new User();
         newUser.setEmail("NewUser@Example.COM");
-        newUser.setPassword("password123");
+        newUser.setPassword("StrongPass456!");
         newUser.setFirstName("Jane");
         newUser.setLastName("Smith");
 

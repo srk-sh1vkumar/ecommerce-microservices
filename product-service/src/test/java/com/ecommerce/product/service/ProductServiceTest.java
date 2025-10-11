@@ -36,7 +36,6 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
-    @Mock
     private CircuitBreakerRegistry circuitBreakerRegistry;
 
     private ProductService productService;
@@ -45,11 +44,15 @@ class ProductServiceTest {
     private List<Product> testProducts;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         // Create circuit breaker registry with default configuration
         circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults();
         productService = new ProductService(circuitBreakerRegistry);
-        productService.productRepository = productRepository;
+
+        // Use reflection to inject the mocked repository
+        java.lang.reflect.Field field = ProductService.class.getDeclaredField("productRepository");
+        field.setAccessible(true);
+        field.set(productService, productRepository);
 
         // Setup test data
         testProduct = new Product();

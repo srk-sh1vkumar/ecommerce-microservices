@@ -7,9 +7,12 @@ import com.ecommerce.order.client.ProductServiceClient;
 import com.ecommerce.order.dto.BulkStockUpdateResponse;
 import com.ecommerce.order.dto.CartItemDTO;
 import com.ecommerce.order.dto.CheckoutRequest;
+import com.ecommerce.order.dto.PaymentRequest;
+import com.ecommerce.order.dto.PaymentResponse;
 import com.ecommerce.order.entity.Order;
 import com.ecommerce.order.entity.OrderItem;
 import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.order.service.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,6 +53,9 @@ class OrderServiceTest {
 
     @Mock
     private NotificationServiceClient notificationServiceClient;
+
+    @Mock
+    private PaymentService paymentService;
 
     @InjectMocks
     private OrderService orderService;
@@ -100,8 +106,18 @@ class OrderServiceTest {
         Map<String, Boolean> stockResults = new HashMap<>();
         stockResults.put("prod1", true);
         stockResults.put("prod2", true);
-        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults);
+        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults, 2, 0);
         when(productServiceClient.bulkUpdateStock(anyList())).thenReturn(stockResponse);
+
+        // Mock payment service
+        PaymentResponse paymentResponse = PaymentResponse.builder()
+                .transactionId("pi_test123")
+                .status("succeeded")
+                .amount(new BigDecimal("130.00"))
+                .success(true)
+                .build();
+        doNothing().when(paymentService).validatePaymentRequest(any(PaymentRequest.class));
+        when(paymentService.createPaymentIntent(any(PaymentRequest.class))).thenReturn(paymentResponse);
 
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         doNothing().when(cartServiceClient).clearCart(anyString());
@@ -137,7 +153,7 @@ class OrderServiceTest {
         verify(cartServiceClient).getCartItems("test@example.com");
         verify(productServiceClient, never()).bulkUpdateStock(anyList());
         verify(orderRepository, never()).save(any(Order.class));
-        verify(metricsService).incrementOrdersFailed();
+        verify(metricsService, times(2)).incrementOrdersFailed();
     }
 
     @Test
@@ -149,7 +165,7 @@ class OrderServiceTest {
         Map<String, Boolean> stockResults = new HashMap<>();
         stockResults.put("prod1", true);
         stockResults.put("prod2", false);  // Failed stock update
-        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults);
+        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults, 1, 1);
         when(productServiceClient.bulkUpdateStock(anyList())).thenReturn(stockResponse);
 
         // Act & Assert
@@ -160,7 +176,7 @@ class OrderServiceTest {
         verify(cartServiceClient).getCartItems("test@example.com");
         verify(productServiceClient).bulkUpdateStock(anyList());
         verify(orderRepository, never()).save(any(Order.class));
-        verify(metricsService).incrementOrdersFailed();
+        verify(metricsService, times(2)).incrementOrdersFailed();
     }
 
     @Test
@@ -172,8 +188,18 @@ class OrderServiceTest {
         Map<String, Boolean> stockResults = new HashMap<>();
         stockResults.put("prod1", true);
         stockResults.put("prod2", true);
-        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults);
+        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults, 2, 0);
         when(productServiceClient.bulkUpdateStock(anyList())).thenReturn(stockResponse);
+
+        // Mock payment service
+        PaymentResponse paymentResponse = PaymentResponse.builder()
+                .transactionId("pi_test123")
+                .status("succeeded")
+                .amount(new BigDecimal("130.00"))
+                .success(true)
+                .build();
+        doNothing().when(paymentService).validatePaymentRequest(any(PaymentRequest.class));
+        when(paymentService.createPaymentIntent(any(PaymentRequest.class))).thenReturn(paymentResponse);
 
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
         doNothing().when(cartServiceClient).clearCart(anyString());
@@ -265,8 +291,18 @@ class OrderServiceTest {
         Map<String, Boolean> stockResults = new HashMap<>();
         stockResults.put("prod1", true);
         stockResults.put("prod2", true);
-        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults);
+        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults, 2, 0);
         when(productServiceClient.bulkUpdateStock(anyList())).thenReturn(stockResponse);
+
+        // Mock payment service
+        PaymentResponse paymentResponse = PaymentResponse.builder()
+                .transactionId("pi_test123")
+                .status("succeeded")
+                .amount(new BigDecimal("130.00"))
+                .success(true)
+                .build();
+        doNothing().when(paymentService).validatePaymentRequest(any(PaymentRequest.class));
+        when(paymentService.createPaymentIntent(any(PaymentRequest.class))).thenReturn(paymentResponse);
 
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
         doNothing().when(cartServiceClient).clearCart(anyString());
@@ -293,8 +329,18 @@ class OrderServiceTest {
         Map<String, Boolean> stockResults = new HashMap<>();
         stockResults.put("prod1", true);
         stockResults.put("prod2", true);
-        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults);
+        BulkStockUpdateResponse stockResponse = new BulkStockUpdateResponse(stockResults, 2, 0);
         when(productServiceClient.bulkUpdateStock(anyList())).thenReturn(stockResponse);
+
+        // Mock payment service
+        PaymentResponse paymentResponse = PaymentResponse.builder()
+                .transactionId("pi_test123")
+                .status("succeeded")
+                .amount(new BigDecimal("130.00"))
+                .success(true)
+                .build();
+        doNothing().when(paymentService).validatePaymentRequest(any(PaymentRequest.class));
+        when(paymentService.createPaymentIntent(any(PaymentRequest.class))).thenReturn(paymentResponse);
 
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         doNothing().when(cartServiceClient).clearCart(anyString());
@@ -318,7 +364,7 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.checkout(checkoutRequest))
             .isInstanceOf(RuntimeException.class);
 
-        verify(metricsService).incrementOrdersFailed();
+        verify(metricsService, times(2)).incrementOrdersFailed();
         verify(metricsService, never()).incrementOrdersPlaced();
     }
 }
