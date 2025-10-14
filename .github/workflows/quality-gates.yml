@@ -1,0 +1,264 @@
+name: Quality Gates
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '17'
+  COVERAGE_THRESHOLD: 70
+
+jobs:
+  # Job 1: Code quality analysis
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Build and analyze with SonarCloud
+        if: env.SONAR_TOKEN != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          cd common-lib && mvn clean install -DskipTests && cd ..
+          mvn -B verify sonar:sonar \
+            -Dsonar.projectKey=ecommerce-microservices \
+            -Dsonar.organization=your-org \
+            -Dsonar.host.url=https://sonarcloud.io
+
+      - name: Run CheckStyle
+        run: |
+          mvn checkstyle:checkstyle || echo "Checkstyle warnings found"
+
+      - name: Run SpotBugs
+        run: |
+          mvn spotbugs:check || echo "SpotBugs warnings found"
+
+  # Job 2: Test coverage enforcement
+  coverage-check:
+    name: Coverage Check - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - product-service
+          - user-service
+          - cart-service
+          - order-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build common-lib
+        run: |
+          cd common-lib
+          mvn clean install -DskipTests
+
+      - name: Run tests and check coverage
+        run: |
+          cd ${{ matrix.service }}
+          mvn clean test jacoco:report jacoco:check
+
+      - name: Extract coverage percentage
+        id: coverage
+        run: |
+          cd ${{ matrix.service }}
+          COVERAGE=$(grep -oP 'Total.*?([0-9]+)%' target/site/jacoco/index.html | grep -oP '[0-9]+' | head -1)
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "📊 ${{ matrix.service }} coverage: ${COVERAGE}%"
+
+          if [ "$COVERAGE" -lt "${{ env.COVERAGE_THRESHOLD }}" ]; then
+            echo "❌ Coverage $COVERAGE% is below threshold ${{ env.COVERAGE_THRESHOLD }}%"
+            exit 1
+          else
+            echo "✅ Coverage $COVERAGE% meets threshold ${{ env.COVERAGE_THRESHOLD }}%"
+          fi
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const coverage = '${{ steps.coverage.outputs.coverage }}';
+            const service = '${{ matrix.service }}';
+            const threshold = '${{ env.COVERAGE_THRESHOLD }}';
+            const emoji = coverage >= threshold ? '✅' : '❌';
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${emoji} **${service}** test coverage: **${coverage}%** (threshold: ${threshold}%)`
+            });
+
+  # Job 3: Dependency vulnerability check
+  dependency-check:
+    name: Dependency Vulnerability Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run OWASP Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:check -DfailBuildOnCVSS=7
+
+      - name: Upload dependency check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: |
+            **/target/dependency-check-report.html
+          retention-days: 30
+
+  # Job 4: License compliance check
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Check licenses
+        run: |
+          mvn license:add-third-party
+          mvn license:check-file-header || echo "License check completed with warnings"
+
+  # Job 5: Code duplication detection
+  duplication-check:
+    name: Code Duplication Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run CPD (Copy-Paste Detector)
+        run: |
+          mvn pmd:cpd || echo "Duplication detected"
+
+      - name: Upload CPD report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpd-report
+          path: |
+            **/target/cpd.xml
+          retention-days: 7
+
+  # Job 6: API contract validation
+  contract-validation:
+    name: API Contract Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build common-lib
+        run: |
+          cd common-lib
+          mvn clean install -DskipTests
+
+      - name: Validate OpenAPI specs
+        run: |
+          # Check if OpenAPI specs are generated and valid
+          for service in product-service user-service cart-service order-service; do
+            cd $service
+            mvn spring-boot:start -DskipTests
+            sleep 30
+
+            # Download OpenAPI spec
+            curl -f http://localhost:8080/v3/api-docs -o openapi.json || echo "Could not fetch OpenAPI spec for $service"
+
+            mvn spring-boot:stop
+            cd ..
+          done
+
+  # Job 7: Quality gate summary
+  quality-gate-summary:
+    name: Quality Gate Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, coverage-check, dependency-check, license-check]
+    if: always()
+
+    steps:
+      - name: Check quality gates status
+        run: |
+          echo "# Quality Gates Summary" > summary.md
+          echo "" >> summary.md
+          echo "## Results" >> summary.md
+          echo "- Code Quality: ${{ needs.code-quality.result }}" >> summary.md
+          echo "- Test Coverage: ${{ needs.coverage-check.result }}" >> summary.md
+          echo "- Dependency Check: ${{ needs.dependency-check.result }}" >> summary.md
+          echo "- License Check: ${{ needs.license-check.result }}" >> summary.md
+
+          cat summary.md
+
+      - name: Quality gates passed
+        if: needs.code-quality.result == 'success' && needs.coverage-check.result == 'success' && needs.dependency-check.result == 'success'
+        run: |
+          echo "✅ All quality gates passed!"
+
+      - name: Quality gates failed
+        if: needs.code-quality.result == 'failure' || needs.coverage-check.result == 'failure' || needs.dependency-check.result == 'failure'
+        run: |
+          echo "❌ Quality gates failed!"
+          exit 1

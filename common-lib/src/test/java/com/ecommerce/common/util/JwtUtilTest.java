@@ -58,8 +58,8 @@ class JwtUtilTest {
         @DisplayName("Should generate different tokens for same email")
         void testTokenUniqueness() {
             String token1 = jwtUtil.generateToken(TEST_EMAIL);
-            // Small delay to ensure different timestamps
-            try { Thread.sleep(10); } catch (InterruptedException e) {}
+            // Delay to ensure different timestamps (JWT uses second precision)
+            try { Thread.sleep(1100); } catch (InterruptedException e) {}
             String token2 = jwtUtil.generateToken(TEST_EMAIL);
 
             assertThat(token1).isNotEqualTo(token2);

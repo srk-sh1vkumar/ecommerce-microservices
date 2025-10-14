@@ -8,11 +8,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -26,37 +28,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Unit tests for OrderController.
- * Tests REST endpoints for order operations.
+ * Standalone unit tests for OrderController using MockMvc without Spring context.
  */
-@WebMvcTest(controllers = OrderController.class)
-@org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc(addFilters = false)
-@org.springframework.boot.autoconfigure.EnableAutoConfiguration(
-    exclude = {
-        org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration.class,
-        org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration.class
-    }
-)
-@DisplayName("OrderController Tests")
+@ExtendWith(MockitoExtension.class)
+@DisplayName("OrderController Standalone Tests")
 class OrderControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @Mock
     private OrderService orderService;
 
-    @MockBean
-    private io.micrometer.core.instrument.MeterRegistry meterRegistry;
-
-    @MockBean
-    private com.ecommerce.common.metrics.MetricsService metricsService;
-
-    @MockBean
-    private com.ecommerce.common.metrics.MetricsAspect metricsAspect;
+    @InjectMocks
+    private OrderController orderController;
 
     private CheckoutRequest checkoutRequest;
     private Order testOrder;
@@ -64,6 +50,9 @@ class OrderControllerTest {
 
     @BeforeEach
     void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(orderController).build();
+        objectMapper = new ObjectMapper();
+
         checkoutRequest = new CheckoutRequest();
         checkoutRequest.setUserEmail("test@example.com");
         checkoutRequest.setShippingAddress("123 Test St, Test City, TC 12345");

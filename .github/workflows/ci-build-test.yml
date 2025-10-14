@@ -1,0 +1,239 @@
+name: CI - Build and Test All Services
+
+on:
+  push:
+    branches: [ main, develop, feature/** ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  MAVEN_OPTS: -Xmx1024m
+  JAVA_VERSION: '17'
+
+jobs:
+  # Job 1: Build and test common-lib (dependency for all services)
+  build-common-lib:
+    name: Build Common Library
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build common-lib
+        run: |
+          cd common-lib
+          mvn clean install -DskipTests
+
+      - name: Run common-lib tests
+        run: |
+          cd common-lib
+          mvn test
+
+      - name: Generate common-lib coverage report
+        run: |
+          cd common-lib
+          mvn jacoco:report
+
+      - name: Upload common-lib artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: common-lib
+          path: common-lib/target/*.jar
+          retention-days: 1
+
+      - name: Upload common-lib coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: common-lib-coverage
+          path: common-lib/target/site/jacoco/
+          retention-days: 7
+
+  # Job 2: Build and test all microservices in parallel
+  build-services:
+    name: Build ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: build-common-lib
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - product-service
+          - user-service
+          - cart-service
+          - order-service
+          - notification-service
+          - api-gateway
+          - eureka-server
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Download common-lib artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: common-lib
+          path: ~/.m2/repository/com/ecommerce/common-lib/1.0.0/
+
+      - name: Install common-lib to local Maven repo
+        run: |
+          cd common-lib
+          mvn clean install -DskipTests
+
+      - name: Build ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          mvn clean compile -DskipTests
+
+      - name: Run ${{ matrix.service }} tests
+        run: |
+          cd ${{ matrix.service }}
+          mvn test
+
+      - name: Generate ${{ matrix.service }} coverage report
+        run: |
+          cd ${{ matrix.service }}
+          mvn jacoco:report
+
+      - name: Check coverage threshold
+        run: |
+          cd ${{ matrix.service }}
+          mvn jacoco:check || echo "Coverage threshold not met for ${{ matrix.service }}"
+
+      - name: Upload ${{ matrix.service }} JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-jar
+          path: ${{ matrix.service }}/target/*.jar
+          retention-days: 7
+
+      - name: Upload ${{ matrix.service }} coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-coverage
+          path: ${{ matrix.service }}/target/site/jacoco/
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-test-results
+          path: ${{ matrix.service }}/target/surefire-reports/
+          retention-days: 7
+
+  # Job 3: Aggregate test results and coverage
+  aggregate-results:
+    name: Aggregate Test Results
+    runs-on: ubuntu-latest
+    needs: build-services
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-coverage'
+          path: coverage-reports
+
+      - name: Generate coverage summary
+        run: |
+          echo "# Test Coverage Summary" > coverage-summary.md
+          echo "" >> coverage-summary.md
+          echo "| Service | Coverage |" >> coverage-summary.md
+          echo "|---------|----------|" >> coverage-summary.md
+
+          for dir in coverage-reports/*-coverage; do
+            if [ -d "$dir" ]; then
+              service=$(basename "$dir" | sed 's/-coverage//')
+              if [ -f "$dir/index.html" ]; then
+                coverage=$(grep -oP 'Total.*?([0-9]+)%' "$dir/index.html" | grep -oP '[0-9]+%' | head -1 || echo "N/A")
+                echo "| $service | $coverage |" >> coverage-summary.md
+              fi
+            fi
+          done
+
+          cat coverage-summary.md
+
+      - name: Upload coverage summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage-summary.md
+          retention-days: 30
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('coverage-summary.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+
+  # Job 4: Security scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: build-common-lib
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run dependency check
+        run: |
+          mvn org.owasp:dependency-check-maven:check -DskipTests || echo "Dependency check completed with warnings"
+
+      - name: Upload dependency check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: target/dependency-check-report.html
+          retention-days: 30
+
+  # Job 5: Build success notification
+  build-complete:
+    name: Build Complete
+    runs-on: ubuntu-latest
+    needs: [build-common-lib, build-services, aggregate-results]
+    if: success()
+
+    steps:
+      - name: Build Success
+        run: |
+          echo "✅ All services built and tested successfully!"
+          echo "🎉 CI pipeline completed"

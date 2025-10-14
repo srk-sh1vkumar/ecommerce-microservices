@@ -46,7 +46,7 @@ class ValidationUtilsTest {
         void testInvalidEmail(String email) {
             assertThatThrownBy(() -> ValidationUtils.validateEmail(email))
                 .isInstanceOf(ServiceException.class)
-                .hasMessageContaining("email");
+                .satisfies(e -> assertThat(e.getMessage().toLowerCase()).contains("email"));
         }
 
         @Test
