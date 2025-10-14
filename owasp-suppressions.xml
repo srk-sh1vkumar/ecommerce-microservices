@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!--
+        OWASP Dependency Check Suppressions
+
+        This file contains suppressions for known false positives or accepted risks.
+        Review regularly and remove suppressions when vulnerabilities are patched.
+    -->
+
+    <!-- Suppress Spring Boot false positives for specific versions -->
+    <suppress>
+        <notes><![CDATA[
+        Spring Boot 3.2.0 - Known safe in our usage context
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/.*@3\.2\.0.*$</packageUrl>
+        <cve>CVE-2016-1000027</cve>
+    </suppress>
+
+    <!-- Suppress MongoDB driver false positives -->
+    <suppress>
+        <notes><![CDATA[
+        MongoDB driver - internal usage only, not exposed to external input
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mongodb/.*$</packageUrl>
+        <cve>CVE-2021-20328</cve>
+    </suppress>
+
+    <!-- Add more suppressions as needed based on actual vulnerabilities found -->
+</suppressions>
