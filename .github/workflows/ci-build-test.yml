@@ -86,12 +86,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Download common-lib artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: common-lib
-          path: ~/.m2/repository/com/ecommerce/common-lib/1.0.0/
-
       - name: Install common-lib to local Maven repo
         run: |
           cd common-lib
@@ -100,7 +94,7 @@ jobs:
       - name: Build ${{ matrix.service }}
         run: |
           cd ${{ matrix.service }}
-          mvn clean compile -DskipTests
+          mvn clean package -DskipTests
 
       - name: Run ${{ matrix.service }} tests
         run: |
