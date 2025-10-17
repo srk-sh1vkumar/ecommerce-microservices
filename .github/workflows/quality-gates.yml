@@ -71,7 +71,7 @@ jobs:
       - name: Run tests and generate coverage
         run: |
           cd ${{ matrix.service }}
-          mvn clean test jacoco:report
+          mvn clean package jacoco:report
 
       - name: Extract and verify coverage - FIXED
         id: coverage
