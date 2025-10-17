@@ -79,14 +79,31 @@ jobs:
         run: |
           cd ${{ matrix.service }}
 
+          # Debug: Check if report was generated
+          echo "Checking for coverage report..."
+          ls -la target/site/jacoco/ || echo "No jacoco directory found"
+
           # Use jacoco.csv for accurate coverage calculation
           if [ -f target/site/jacoco/jacoco.csv ]; then
+            echo "✅ Found jacoco.csv file"
+
+            # Calculate coverage with better error handling
             COVERAGE=$(awk -F',' 'NR>1 {missed+=$4; covered+=$5} END {
               total=missed+covered;
-              if(total>0) printf "%.0f", (covered/total)*100
+              if(total>0) printf "%.0f", (covered/total)*100; else printf "0"
             }' target/site/jacoco/jacoco.csv)
+
+            echo "Calculated coverage: ${COVERAGE}%"
           else
-            echo "❌ No coverage report found"
+            echo "❌ No coverage report found at target/site/jacoco/jacoco.csv"
+            echo "Checking for jacoco.exec..."
+            ls -la target/jacoco.exec || echo "No jacoco.exec found"
+            exit 1
+          fi
+
+          # Validate coverage value
+          if [ -z "$COVERAGE" ]; then
+            echo "❌ Coverage calculation returned empty value"
             exit 1
           fi
 
