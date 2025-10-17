@@ -46,10 +46,24 @@ jobs:
             echo "✅ Docker Hub credentials configured"
           else
             echo "secrets_available=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ Docker Hub credentials not configured - skipping Docker build/push for ${{ matrix.service }}"
+            echo "ℹ️ Docker Hub credentials not configured - skipping entire Docker workflow for ${{ matrix.service }}"
           fi
 
+      - name: Skip workflow if no Docker credentials
+        if: steps.check-secrets.outputs.secrets_available == 'false'
+        run: |
+          echo "⏭️ Skipping Docker build workflow - Docker Hub credentials not configured"
+          echo ""
+          echo "This is expected behavior. Docker builds are optional."
+          echo ""
+          echo "To enable Docker Hub deployments:"
+          echo "1. Go to repository Settings → Secrets and variables → Actions"
+          echo "2. Add DOCKER_USERNAME with your Docker Hub username"
+          echo "3. Add DOCKER_PASSWORD with your Docker Hub access token"
+          exit 0
+
       - name: Set up JDK ${{ env.JAVA_VERSION }}
+        if: steps.check-secrets.outputs.secrets_available == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -57,11 +71,13 @@ jobs:
           cache: maven
 
       - name: Build common-lib
+        if: steps.check-secrets.outputs.secrets_available == 'true'
         run: |
           cd common-lib
           mvn clean install -DskipTests
 
       - name: Build ${{ matrix.service }}
+        if: steps.check-secrets.outputs.secrets_available == 'true'
         run: |
           cd ${{ matrix.service }}
           mvn clean package -DskipTests
@@ -104,23 +120,9 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
 
-      - name: Docker build skipped notice
-        if: steps.check-secrets.outputs.secrets_available == 'false'
-        run: |
-          echo "⏭️ Docker build/push skipped for ${{ matrix.service }} - credentials not configured"
-          echo ""
-          echo "Maven build completed successfully ✅"
-          echo "JAR file available at: ${{ matrix.service }}/target/*.jar"
-          echo ""
-          echo "To enable Docker Hub deployments:"
-          echo "1. Go to repository Settings → Secrets and variables → Actions"
-          echo "2. Add DOCKER_USERNAME with your Docker Hub username"
-          echo "3. Add DOCKER_PASSWORD with your Docker Hub access token"
-          exit 0
-
       - name: Image digest
         if: steps.check-secrets.outputs.secrets_available == 'true'
-        run: echo "Image pushed with digest ${{ steps.docker_build.outputs.digest }}"
+        run: echo "✅ Docker image built successfully for ${{ matrix.service }}"
 
   # Job 2: Build Docker Compose for local development
   docker-compose-test:
