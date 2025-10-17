@@ -91,15 +91,10 @@ jobs:
           cd common-lib
           mvn clean install -DskipTests
 
-      - name: Build ${{ matrix.service }}
+      - name: Build and test ${{ matrix.service }}
         run: |
           cd ${{ matrix.service }}
-          mvn clean package -DskipTests
-
-      - name: Run ${{ matrix.service }} tests
-        run: |
-          cd ${{ matrix.service }}
-          mvn test
+          mvn clean package
 
       - name: Generate ${{ matrix.service }} coverage report
         run: |
