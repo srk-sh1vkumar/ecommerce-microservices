@@ -116,6 +116,7 @@ jobs:
           echo "1. Go to repository Settings → Secrets and variables → Actions"
           echo "2. Add DOCKER_USERNAME with your Docker Hub username"
           echo "3. Add DOCKER_PASSWORD with your Docker Hub access token"
+          exit 0
 
       - name: Image digest
         if: steps.check-secrets.outputs.secrets_available == 'true'
