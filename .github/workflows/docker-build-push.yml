@@ -152,8 +152,8 @@ jobs:
           echo "Building common-lib and all services..."
           # Build common-lib first
           mvn -pl common-lib clean install -DskipTests
-          # Build all services
-          mvn -pl product-service,user-service,cart-service,order-service,notification-service,wishlist-service,api-gateway,eureka-server clean package -DskipTests
+          # Build all services (use -am to build dependencies)
+          mvn -pl product-service,user-service,cart-service,order-service,notification-service,wishlist-service,api-gateway,eureka-server -am clean package -DskipTests
 
       - name: Create .env file
         run: |
