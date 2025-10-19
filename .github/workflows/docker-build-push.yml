@@ -150,15 +150,10 @@ jobs:
       - name: Build JARs before Docker Compose
         run: |
           echo "Building common-lib and all services..."
-          cd common-lib && mvn clean install -DskipTests
-          cd ../product-service && mvn clean package -DskipTests
-          cd ../user-service && mvn clean package -DskipTests
-          cd ../cart-service && mvn clean package -DskipTests
-          cd ../order-service && mvn clean package -DskipTests
-          cd ../notification-service && mvn clean package -DskipTests
-          cd ../wishlist-service && mvn clean package -DskipTests
-          cd ../api-gateway && mvn clean package -DskipTests
-          cd ../eureka-server && mvn clean package -DskipTests
+          # Build common-lib first
+          mvn -pl common-lib clean install -DskipTests
+          # Build all services
+          mvn -pl product-service,user-service,cart-service,order-service,notification-service,wishlist-service,api-gateway,eureka-server clean package -DskipTests
 
       - name: Create .env file
         run: |
