@@ -57,6 +57,13 @@ jobs:
           path: common-lib/target/site/jacoco/
           retention-days: 7
 
+      - name: Upload common-lib to .m2 repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: common-lib-m2
+          path: ~/.m2/repository/com/ecommerce/common-lib/
+          retention-days: 1
+
   # Job 2: Build and test all microservices in parallel
   build-services:
     name: Build ${{ matrix.service }}
@@ -86,10 +93,21 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Install common-lib to local Maven repo
+      - name: Download common-lib from .m2 repository
+        uses: actions/download-artifact@v4
+        with:
+          name: common-lib-m2
+          path: ~/.m2/repository/com/ecommerce/common-lib/
+
+      - name: Verify common-lib installation
+        run: |
+          echo "Checking for common-lib in Maven local repository..."
+          ls -la ~/.m2/repository/com/ecommerce/common-lib/ || echo "⚠️ common-lib not found, will rebuild"
+
+      - name: Install common-lib to local Maven repo (fallback)
         run: |
           cd common-lib
-          mvn clean install -DskipTests
+          mvn clean install -DskipTests -U
 
       - name: Build and test ${{ matrix.service }}
         run: |
