@@ -149,11 +149,9 @@ jobs:
 
       - name: Build JARs before Docker Compose
         run: |
-          echo "Building common-lib and all services..."
-          # Build common-lib first
-          mvn -pl common-lib clean install -DskipTests
-          # Build all services (use -am to build dependencies)
-          mvn -pl product-service,user-service,cart-service,order-service,notification-service,wishlist-service,api-gateway,eureka-server -am clean package -DskipTests
+          echo "Building all services from root..."
+          # Build everything from root (includes common-lib and all services)
+          mvn clean install -DskipTests
 
       - name: Create .env file
         run: |
