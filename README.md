@@ -490,13 +490,31 @@ ecommerce-microservices/
 └── TRACING_ACCESS_GUIDE.md   # OpenTelemetry setup
 ```
 
-## 📚 Additional Documentation
+## 📚 Documentation
 
-- **[Architecture Diagram](ARCHITECTURE_DIAGRAM.md)**: Comprehensive system architecture
-- **[Deployment Strategy](DEPLOYMENT_STRATEGY.md)**: Production deployment guide
-- **[Tracing Guide](TRACING_ACCESS_GUIDE.md)**: OpenTelemetry and monitoring setup
-- **[AppDynamics Setup](APPDYNAMICS_SETUP.md)**: APM integration guide
-- **[Development Guide](DEVELOPMENT_GUIDE.md)**: Development best practices
+Comprehensive documentation is organized in the [`docs/`](docs/) directory:
+
+### Quick Links
+- **Getting Started**: [Project Setup](docs/development/PROJECT_SETUP_GUIDE.md) | [Development Guide](docs/development/DEVELOPMENT_GUIDE.md) | [Local Setup](docs/development/README.local.md)
+- **Architecture**: [Overview](docs/architecture/ARCHITECTURE.md) | [Diagram](docs/architecture/ARCHITECTURE_DIAGRAM.md) | [Flow Summary](docs/architecture/EXECUTIVE_FLOW_SUMMARY.md)
+- **Deployment**: [Strategy](docs/DEPLOYMENT_STRATEGY.md) | [Success Summary](docs/deployment/DEPLOYMENT_SUCCESS_SUMMARY.md) | [Test Status](docs/deployment/DEPLOYMENT_TEST_STATUS.md)
+- **Monitoring**: [Strategy](monitoring/MONITORING_STRATEGY.md) | [Portal](monitoring/UNIFIED_MONITORING_PORTAL.md) | [Tracing](docs/guides/TRACING_ACCESS_GUIDE.md)
+- **Testing**: [Strategy](testing/TESTING_STRATEGY.md) | [Contract Testing](docs/development/CONTRACT_TESTING.md)
+- **Setup Guides**: [AppDynamics](docs/guides/APPDYNAMICS_SETUP.md) | [Tracing Status](docs/guides/TRACING_STATUS_REPORT.md)
+
+### Documentation Categories
+- **🏗️ [Architecture](docs/architecture/)** - System design, diagrams, and executive summaries
+- **🚀 [Deployment](docs/deployment/)** - Deployment strategies, success reports, and test status
+- **💻 [Development](docs/development/)** - Development guides, setup instructions, and contract testing
+- **📖 [Guides](docs/guides/)** - Setup guides for AppDynamics, tracing, and monitoring
+- **📊 [Monitoring](monitoring/)** - Monitoring strategies and unified portal documentation
+- **🔗 [Integration](integration/)** - Integration patterns and SRE Analytics integration
+- **✅ [Testing](testing/)** - Testing strategies and best practices
+- **🔒 [Compliance](compliance/)** - Security, accessibility, and business strategy
+- **📈 [Improvements](docs/improvements/)** - Roadmaps, analysis, and refactoring documentation
+- **📝 [Summaries](docs/summaries/)** - Session summaries and quick references
+
+See **[docs/README.md](docs/README.md)** for complete documentation index and navigation.
 
 ## 🎯 Production Considerations
 
