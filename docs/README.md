@@ -73,6 +73,7 @@ Development guides and best practices:
 - **[Project Setup Guide](development/PROJECT_SETUP_GUIDE.md)** - Initial project setup
 - **[Local Development](development/README.local.md)** - Local environment configuration
 - **[Contract Testing](development/CONTRACT_TESTING.md)** - Contract testing approach and tools
+- **[API Documentation Guide](api/API_DOCUMENTATION_GUIDE.md)** - Complete OpenAPI/Swagger documentation
 
 **Development Workflow**:
 1. Feature branch development
