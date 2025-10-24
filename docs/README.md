@@ -91,6 +91,8 @@ Step-by-step setup instructions:
 - **[AppDynamics Setup](guides/APPDYNAMICS_SETUP.md)** - Configure AppDynamics monitoring
 - **[Tracing Access Guide](guides/TRACING_ACCESS_GUIDE.md)** - Access distributed tracing
 - **[Tracing Status Report](guides/TRACING_STATUS_REPORT.md)** - Current tracing implementation status
+- **[Troubleshooting Guide](guides/TROUBLESHOOTING_GUIDE.md)** - Comprehensive troubleshooting and debug guide
+- **[Troubleshooting Quick Reference](guides/TROUBLESHOOTING_QUICK_REFERENCE.md)** - Print-friendly command reference card
 
 ---
 
