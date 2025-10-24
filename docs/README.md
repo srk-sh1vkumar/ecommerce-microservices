@@ -36,6 +36,7 @@ Understand the system design and architecture:
 
 - **[Architecture Overview](architecture/ARCHITECTURE.md)** - High-level system design and component interactions
 - **[Architecture Diagram](architecture/ARCHITECTURE_DIAGRAM.md)** - Visual representations of the architecture
+- **[Architecture Decision Records (ADRs)](architecture/adr/README.md)** - Key architectural decisions and their rationale
 - **[Executive Flow Summary](architecture/EXECUTIVE_FLOW_SUMMARY.md)** - Executive-level architecture summary
 - **[Executive Summary Flow Diagram](architecture/EXECUTIVE_SUMMARY_FLOW_DIAGRAM.md)** - Visual executive summary
 
@@ -45,6 +46,12 @@ Understand the system design and architecture:
 - API Gateway pattern with Spring Cloud Gateway
 - Event-driven communication
 - CQRS and Event Sourcing patterns
+
+**Documented Decisions**:
+- [ADR-001: Microservices Architecture](architecture/adr/001-microservices-architecture.md)
+- [ADR-002: Service Discovery with Eureka](architecture/adr/002-service-discovery-with-eureka.md)
+- [ADR-003: API Gateway Pattern](architecture/adr/003-api-gateway-pattern.md)
+- See [all ADRs](architecture/adr/README.md) for complete decision history
 
 ---
 

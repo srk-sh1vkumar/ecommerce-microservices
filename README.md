@@ -515,10 +515,11 @@ Comprehensive documentation is organized in the [`docs/`](docs/) directory:
 
 ### Quick Links
 - **Getting Started**: [Project Setup](docs/development/PROJECT_SETUP_GUIDE.md) | [Development Guide](docs/development/DEVELOPMENT_GUIDE.md) | [Local Setup](docs/development/README.local.md)
-- **Architecture**: [Overview](docs/architecture/ARCHITECTURE.md) | [Diagram](docs/architecture/ARCHITECTURE_DIAGRAM.md) | [Flow Summary](docs/architecture/EXECUTIVE_FLOW_SUMMARY.md)
+- **Architecture**: [Overview](docs/architecture/ARCHITECTURE.md) | [Diagram](docs/architecture/ARCHITECTURE_DIAGRAM.md) | [ADRs](docs/architecture/adr/README.md) | [Flow Summary](docs/architecture/EXECUTIVE_FLOW_SUMMARY.md)
 - **Deployment**: [Strategy](docs/DEPLOYMENT_STRATEGY.md) | [Success Summary](docs/deployment/DEPLOYMENT_SUCCESS_SUMMARY.md) | [Test Status](docs/deployment/DEPLOYMENT_TEST_STATUS.md)
 - **Monitoring**: [Strategy](monitoring/MONITORING_STRATEGY.md) | [Portal](monitoring/UNIFIED_MONITORING_PORTAL.md) | [Tracing](docs/guides/TRACING_ACCESS_GUIDE.md)
 - **Testing**: [Strategy](testing/TESTING_STRATEGY.md) | [Contract Testing](docs/development/CONTRACT_TESTING.md)
+- **API Documentation**: [Complete Guide](docs/api/API_DOCUMENTATION_GUIDE.md) - OpenAPI/Swagger documentation and testing
 - **Setup Guides**: [AppDynamics](docs/guides/APPDYNAMICS_SETUP.md) | [Tracing Status](docs/guides/TRACING_STATUS_REPORT.md)
 - **Troubleshooting**: [Complete Guide](docs/guides/TROUBLESHOOTING_GUIDE.md) - Debug issues and resolve problems
 
