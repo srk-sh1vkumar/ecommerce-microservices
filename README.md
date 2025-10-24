@@ -189,6 +189,25 @@ For production deployment with Kubernetes, see [DEPLOYMENT_STRATEGY.md](DEPLOYME
 
 All requests go through the API Gateway at `http://localhost:8081`
 
+### 📖 Interactive API Documentation (Swagger UI)
+
+Explore and test all APIs interactively:
+
+| Service | Swagger UI | OpenAPI Spec |
+|---------|-----------|--------------|
+| **User Service** | http://localhost:8082/swagger-ui.html | http://localhost:8082/v3/api-docs |
+| **Product Service** | http://localhost:8081/swagger-ui.html | http://localhost:8081/v3/api-docs |
+| **Cart Service** | http://localhost:8083/swagger-ui.html | http://localhost:8083/v3/api-docs |
+| **Order Service** | http://localhost:8084/swagger-ui.html | http://localhost:8084/v3/api-docs |
+
+**📚 Complete Guide**: See [API Documentation Guide](docs/api/API_DOCUMENTATION_GUIDE.md) for comprehensive documentation including:
+- Interactive testing with Swagger UI
+- Authentication flows with JWT
+- Complete endpoint reference
+- Common use cases and examples
+- Error handling guide
+- Best practices
+
 ### User Service
 ```bash
 # Register new user
