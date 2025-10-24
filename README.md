@@ -520,6 +520,7 @@ Comprehensive documentation is organized in the [`docs/`](docs/) directory:
 - **Monitoring**: [Strategy](monitoring/MONITORING_STRATEGY.md) | [Portal](monitoring/UNIFIED_MONITORING_PORTAL.md) | [Tracing](docs/guides/TRACING_ACCESS_GUIDE.md)
 - **Testing**: [Strategy](testing/TESTING_STRATEGY.md) | [Contract Testing](docs/development/CONTRACT_TESTING.md)
 - **Setup Guides**: [AppDynamics](docs/guides/APPDYNAMICS_SETUP.md) | [Tracing Status](docs/guides/TRACING_STATUS_REPORT.md)
+- **Troubleshooting**: [Complete Guide](docs/guides/TROUBLESHOOTING_GUIDE.md) - Debug issues and resolve problems
 
 ### Documentation Categories
 - **🏗️ [Architecture](docs/architecture/)** - System design, diagrams, and executive summaries
