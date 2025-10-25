@@ -548,11 +548,22 @@ See **[docs/README.md](docs/README.md)** for complete documentation index and na
 
 ## 🤝 Contributing
 
+We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+**Quick Start**:
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
+2. Create feature branch (`git checkout -b feature/your-feature-name`)
+3. Follow coding standards and write tests
+4. Use conventional commits (`feat:`, `fix:`, `docs:`, etc.)
+5. Push to branch (`git push origin feature/your-feature-name`)
+6. Open Pull Request with clear description
+
+**Resources for Contributors**:
+- [Contributing Guide](CONTRIBUTING.md) - Complete contribution guidelines
+- [Development Guide](docs/development/DEVELOPMENT_GUIDE.md) - Development workflow
+- [Project Setup](docs/development/PROJECT_SETUP_GUIDE.md) - Getting started
+- [Architecture Decision Records](docs/architecture/adr/README.md) - Architectural decisions
+- [Troubleshooting](docs/guides/TROUBLESHOOTING_GUIDE.md) - Common issues and solutions
 
 ## 📄 License
 

@@ -226,11 +226,17 @@ Project tracking, improvements, and summaries:
 ## 📝 Contributing
 
 Interested in contributing? See:
-- [Development Guide](development/DEVELOPMENT_GUIDE.md)
-- [Project Setup Guide](development/PROJECT_SETUP_GUIDE.md)
-- Git workflow and branching strategy
-- Pull request process
-- Code review guidelines
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Complete contribution guide
+- [Development Guide](development/DEVELOPMENT_GUIDE.md) - Development workflow and best practices
+- [Project Setup Guide](development/PROJECT_SETUP_GUIDE.md) - Initial project setup
+- [Architecture Decision Records](architecture/adr/README.md) - How to document architectural decisions
+
+**Quick Start for Contributors**:
+1. Fork the repository and clone locally
+2. Create a feature branch (`feature/your-feature-name`)
+3. Follow coding standards and testing requirements
+4. Use conventional commits
+5. Create a pull request with clear description
 
 ---
 
