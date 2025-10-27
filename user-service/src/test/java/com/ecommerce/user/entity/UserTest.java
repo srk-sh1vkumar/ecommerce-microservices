@@ -187,4 +187,40 @@ class UserTest {
         assertThat(result).contains("USER");
         assertThat(result).doesNotContain("Password"); // Password should not be in toString
     }
+
+    @Test
+    @DisplayName("Parameterized constructor should create user with required fields")
+    void parameterizedConstructor_ShouldCreateUserWithRequiredFields() {
+        User newUser = new User("test@example.com", "password123", "Jane", "Smith");
+
+        assertThat(newUser.getEmail()).isEqualTo("test@example.com");
+        assertThat(newUser.getPassword()).isEqualTo("password123");
+        assertThat(newUser.getFirstName()).isEqualTo("Jane");
+        assertThat(newUser.getLastName()).isEqualTo("Smith");
+        assertThat(newUser.getRole()).isEqualTo("USER"); // Default role
+        assertThat(newUser.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("getFullName should return first name plus last name")
+    void getFullName_ShouldReturnCombinedName() {
+        user.setFirstName("John");
+        user.setLastName("Doe");
+
+        assertThat(user.getFullName()).isEqualTo("John Doe");
+    }
+
+    @Test
+    @DisplayName("isAdmin should return true for ADMIN role")
+    void isAdmin_WithAdminRole_ShouldReturnTrue() {
+        user.setRole("ADMIN");
+        assertThat(user.isAdmin()).isTrue();
+    }
+
+    @Test
+    @DisplayName("isAdmin should return false for USER role")
+    void isAdmin_WithUserRole_ShouldReturnFalse() {
+        user.setRole("USER");
+        assertThat(user.isAdmin()).isFalse();
+    }
 }
