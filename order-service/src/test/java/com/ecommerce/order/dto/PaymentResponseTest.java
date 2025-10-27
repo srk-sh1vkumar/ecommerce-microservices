@@ -65,4 +65,63 @@ class PaymentResponseTest {
         assertThat(successResponse.isSuccess()).isTrue();
         assertThat(failureResponse.isSuccess()).isFalse();
     }
+
+    @Test
+    @DisplayName("Builder - Should create DTO with currency and orderId")
+    void builder_ShouldCreateDTOWithCurrencyAndOrderId() {
+        // Act
+        PaymentResponse response = PaymentResponse.builder()
+            .transactionId("pi_test456")
+            .status("processing")
+            .amount(new BigDecimal("249.99"))
+            .currency("USD")
+            .orderId("order789")
+            .success(true)
+            .build();
+
+        // Assert
+        assertThat(response.getCurrency()).isEqualTo("USD");
+        assertThat(response.getOrderId()).isEqualTo("order789");
+    }
+
+    @Test
+    @DisplayName("Default constructor - Should create empty object")
+    void defaultConstructor_ShouldCreateEmptyObject() {
+        // Act
+        PaymentResponse response = new PaymentResponse();
+
+        // Assert
+        assertThat(response.getTransactionId()).isNull();
+        assertThat(response.getStatus()).isNull();
+        assertThat(response.getAmount()).isNull();
+        assertThat(response.getCurrency()).isNull();
+        assertThat(response.getOrderId()).isNull();
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getErrorMessage()).isNull();
+    }
+
+    @Test
+    @DisplayName("Setters - Should update all fields correctly")
+    void setters_ShouldUpdateAllFields() {
+        // Arrange
+        PaymentResponse response = new PaymentResponse();
+
+        // Act
+        response.setTransactionId("pi_new123");
+        response.setStatus("completed");
+        response.setAmount(new BigDecimal("350.00"));
+        response.setCurrency("EUR");
+        response.setOrderId("order999");
+        response.setSuccess(true);
+        response.setErrorMessage("No errors");
+
+        // Assert
+        assertThat(response.getTransactionId()).isEqualTo("pi_new123");
+        assertThat(response.getStatus()).isEqualTo("completed");
+        assertThat(response.getAmount()).isEqualByComparingTo(new BigDecimal("350.00"));
+        assertThat(response.getCurrency()).isEqualTo("EUR");
+        assertThat(response.getOrderId()).isEqualTo("order999");
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.getErrorMessage()).isEqualTo("No errors");
+    }
 }

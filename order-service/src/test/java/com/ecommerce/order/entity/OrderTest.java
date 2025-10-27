@@ -113,4 +113,82 @@ class OrderTest {
         // Assert
         assertThat(order.getId()).isEqualTo("order123");
     }
+
+    @Test
+    @DisplayName("Default constructor - Should create order with defaults")
+    void defaultConstructor_ShouldCreateOrderWithDefaults() {
+        // Act
+        Order order = new Order();
+
+        // Assert
+        assertThat(order.getStatus()).isEqualTo(PENDING);
+        assertThat(order.getOrderDate()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("SetUserEmail - Should update email")
+    void setUserEmail_ShouldUpdateEmail() {
+        // Arrange
+        Order order = new Order();
+
+        // Act
+        order.setUserEmail("updated@example.com");
+
+        // Assert
+        assertThat(order.getUserEmail()).isEqualTo("updated@example.com");
+    }
+
+    @Test
+    @DisplayName("SetTotalAmount - Should update total")
+    void setTotalAmount_ShouldUpdateTotal() {
+        // Arrange
+        Order order = new Order();
+
+        // Act
+        order.setTotalAmount(new BigDecimal("250.00"));
+
+        // Assert
+        assertThat(order.getTotalAmount()).isEqualByComparingTo(new BigDecimal("250.00"));
+    }
+
+    @Test
+    @DisplayName("SetShippingAddress - Should update address")
+    void setShippingAddress_ShouldUpdateAddress() {
+        // Arrange
+        Order order = new Order();
+
+        // Act
+        order.setShippingAddress("456 New St");
+
+        // Assert
+        assertThat(order.getShippingAddress()).isEqualTo("456 New St");
+    }
+
+    @Test
+    @DisplayName("SetOrderDate - Should update order date")
+    void setOrderDate_ShouldUpdateDate() {
+        // Arrange
+        Order order = new Order();
+        LocalDateTime customDate = LocalDateTime.of(2025, 1, 15, 10, 30);
+
+        // Act
+        order.setOrderDate(customDate);
+
+        // Assert
+        assertThat(order.getOrderDate()).isEqualTo(customDate);
+    }
+
+    @Test
+    @DisplayName("SetPaymentDate - Should set payment date")
+    void setPaymentDate_ShouldSetDate() {
+        // Arrange
+        Order order = new Order();
+        LocalDateTime paymentDate = LocalDateTime.now();
+
+        // Act
+        order.setPaymentDate(paymentDate);
+
+        // Assert
+        assertThat(order.getPaymentDate()).isEqualTo(paymentDate);
+    }
 }
